@@ -71,10 +71,11 @@
                     <span class="text-xl tracking-wide text-blue-900 font-bold">HW Tracker</span>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-3 text-sm">
+                    <span id="user-display" class="text-blue-700 font-medium hidden sm:inline-block bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"></span>
                     <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการระบบ</button>
                     <button id="btn-show-add" class="hide btn-primary px-4 py-2 font-medium shadow-sm shadow-blue-200 transition"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
                     <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">ออกจากระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -229,17 +230,6 @@
                     <h2 class="font-bold text-blue-800 text-lg flex items-center"><i class="fas fa-users text-blue-500 mr-2"></i>3. จัดการบัญชีผู้ใช้งานระบบ</h2>
                 </div>
                 
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-sm text-slate-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg font-semibold text-xs"><i class="fas fa-shield-alt mr-1"></i> Admin</span>
-                        <span>จัดการระบบทั้งหมด (เทอม, วิชา, บัญชีผู้ใช้)</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-lg font-semibold text-xs"><i class="fas fa-edit mr-1"></i> Editor</span>
-                        <span>สำหรับคุณครู เข้าใช้เมนู "สั่งงาน" เท่านั้น</span>
-                    </div>
-                </div>
-                
                 <form id="form-user-add" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6 items-end bg-blue-50/30 p-4 rounded-xl border border-blue-100/60">
                     <div>
                         <label class="block text-xs font-semibold text-blue-700 mb-1">Username</label>
@@ -309,10 +299,16 @@
         // --- AUTH LOGIC ---
         async function checkUserSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
+            const userDisplay = document.getElementById('user-display');
+            
             if (session) {
                 currentUser = session.user;
                 document.getElementById('btn-login').classList.add('hide');
                 document.getElementById('btn-logout').classList.remove('hide');
+                
+                const rawName = currentUser.email ? currentUser.email.split('@')[0] : 'ผู้ใช้งาน';
+                userDisplay.innerText = `ผู้ใช้งาน: ${rawName}`;
+                userDisplay.classList.remove('hidden');
                 
                 const { data: roleData } = await supabaseClient.from('users_role').select('role').eq('user_id', currentUser.id).single();
                 if(roleData) {
@@ -331,8 +327,8 @@
                 document.getElementById('btn-logout').classList.add('hide');
                 document.getElementById('btn-admin').classList.add('hide');
                 document.getElementById('btn-show-add').classList.add('hide');
+                userDisplay.classList.add('hidden');
                 
-                // บังคับเปลี่ยนมุมมองกลับมาที่หน้าแรกทันทีเมื่อออกจากระบบ
                 switchView(viewPublic);
             }
 
@@ -374,15 +370,20 @@
             if (formValues) {
                 Swal.fire({title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
                 const { error } = await supabaseClient.auth.signInWithPassword(formValues);
-                if (error) Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่ได้', text: error.message, confirmButtonColor: '#ef4444' });
-                else {
+                if (error) {
+                    Swal.fire({ 
+                        icon: 'error', 
+                        title: 'ไม่พบผู้ใช้', 
+                        text: 'กรุณาตรวจสอบ username password อีกครั้ง', 
+                        confirmButtonColor: '#ef4444' 
+                    });
+                } else {
                     Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
-                    switchView(viewPublic); // พามาหน้าแรกหลังล็อกอินสำเร็จ
+                    switchView(viewPublic);
                 }
             }
         };
 
-        // เมื่อกดออกจากระบบ ให้เคลียร์และดีดกลับมาหน้าหลัก
         document.getElementById('btn-logout').onclick = async () => {
             Swal.fire({title: 'กำลังออกจากระบบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
             await supabaseClient.auth.signOut();
@@ -646,7 +647,7 @@
         }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        // 3. จัดการบัญชีผู้ใช้
+        // 3. จัดการบัญชีผู้ใช้ (ยังคงอยู่หน้า Admin, ไม่เปลี่ยนหน้า, รีเฟรชตาราง)
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้างบัญชี...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
@@ -711,6 +712,7 @@
                 html: `
                     <div class="text-left space-y-3 mt-3">
                         <div><label class="text-sm font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full lowercase" value="${currentName}"></div>
+                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">รหัสผ่านใหม่ (กรอกหากต้องการเปลี่ยน)</label><input type="password" id="eu-pass" class="w-full" placeholder="ปล่อยว่างไว้ถ้าไม่เปลี่ยน"></div>
                         <div><label class="text-sm font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label>
                             <select id="eu-role" class="w-full">
                                 <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option>
@@ -722,14 +724,23 @@
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
                 preConfirm: () => {
                     const n = document.getElementById('eu-name').value.trim().toLowerCase();
+                    const p = document.getElementById('eu-pass').value;
                     if(!n) { Swal.showValidationMessage('กรุณากรอก Username'); return false; }
-                    return { username: n, role: document.getElementById('eu-role').value }
+                    return { username: n, password: p, role: document.getElementById('eu-role').value }
                 }
             });
 
             if (formValues) {
                 Swal.fire({title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                
+                // อัปเดตรหัสผ่านใน Auth (ถ้ามีการกรอกรหัสผ่านใหม่)
+                if (formValues.password && formValues.password.length >= 6) {
+                    await supabaseClient.auth.admin.updateUserById(uid, { password: formValues.password }).catch(() => {});
+                }
+
+                // อัปเดตตาราง users_role
                 await supabaseClient.from('users_role').update({ username: formValues.username, role: formValues.role }).eq('user_id', uid);
+                
                 Toast.fire({ icon: 'success', title: 'อัปเดตบัญชีสำเร็จ' });
                 fetchAppUsers();
             }
