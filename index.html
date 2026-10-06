@@ -276,7 +276,8 @@
             setInterval(updateCountdowns, 60000);
         };
 
-        // --- AUTH LOGIC ---
+
+// --- AUTH LOGIC (เวอร์ชันตรวจสอบ Error) ---
         async function checkUserSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
@@ -284,14 +285,31 @@
                 document.getElementById('btn-login').classList.add('hide');
                 document.getElementById('btn-logout').classList.remove('hide');
                 
-                const { data: roleData } = await supabaseClient.from('users_role').select('role').eq('user_id', currentUser.id).single();
-                if(roleData) {
-                    userRole = roleData.role;
+                // ดึงข้อมูลสิทธิ์แบบจับ Error
+                const { data: roleData, error: roleError } = await supabaseClient
+                    .from('users_role')
+                    .select('role')
+                    .eq('user_id', currentUser.id);
+
+                // ถ้ามี Error จากฐานข้อมูลโดยตรง
+                if (roleError) {
+                    console.error("Supabase Error:", roleError);
+                    Swal.fire('ข้อผิดพลาดระบบฐานข้อมูล', roleError.message, 'error');
+                    return;
+                }
+
+                // ถ้าเจอรหัสนี้ในตาราง
+                if (roleData && roleData.length > 0) {
+                    userRole = roleData[0].role;
                     if(userRole === 'admin') document.getElementById('btn-admin').classList.remove('hide');
                     if(userRole === 'editor' || userRole === 'admin') document.getElementById('btn-show-add').classList.remove('hide');
                 } else {
-                    // หากโดนถอดสิทธิ์
-                    Swal.fire('บัญชีถูกระงับ', 'คุณไม่มีสิทธิ์เข้าถึงระบบ กรุณาติดต่อ Admin', 'error').then(() => supabaseClient.auth.signOut());
+                    // ถ้าหาไม่เจอ ให้โชว์รหัส UID ที่ระบบกำลังหาออกมาให้เห็นชัดๆ
+                    Swal.fire({
+                        title: 'ไม่พบสิทธิ์การใช้งาน',
+                        html: `หน้าเว็บกำลังพยายามหารหัสนี้ในตาราง users_role:<br><br><b class="text-blue-600 text-xs">${currentUser.id}</b><br><br>แต่หาไม่เจอ กรุณาเช็คในฐานข้อมูลว่ามีรหัสนี้ตรงกันเป๊ะๆ หรือไม่`,
+                        icon: 'error'
+                    }).then(() => supabaseClient.auth.signOut());
                 }
             }
             supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') window.location.reload(); });
