@@ -8,10 +8,8 @@
     <!-- CSS / Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -37,16 +35,40 @@
         .btn-primary:hover { background-color: #2563eb; }
         
         .swal2-popup { border-radius: 16px !important; }
+        
+        /* สไตล์สำหรับปุ่มลบรูปในพรีวิว */
+        .preview-remove-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+        .preview-remove-btn:hover { background-color: #dc2626; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
     <!-- Navbar -->
+<!-- Navbar โทนฟ้าสว่าง -->
     <nav class="bg-white border-b border-blue-100 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-2">
-                    <div class="bg-blue-100 text-blue-600 p-2 rounded-lg"><i class="fas fa-book-open"></i></div>
+                    
+                    <!-- เปลี่ยนจากไอคอนเป็นรูปภาพจาก Google Drive -->
+                    <img src="https://drive.google.com/uc?export=view&id=1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-10 w-auto object-contain drop-shadow-sm">
+                    
                     <span class="font-semibold text-lg tracking-wide text-blue-900">HW Tracker</span>
                 </div>
                 <div class="flex items-center space-x-3 text-sm">
@@ -62,7 +84,9 @@
     <!-- Main Content -->
     <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         
-        <!-- Public View -->
+        <!-- ===================================== -->
+        <!-- PUBLIC VIEW (หน้าแรกแสดงงาน) -->
+        <!-- ===================================== -->
         <div id="view-public" class="">
             <div class="flex justify-between items-end mb-6">
                 <h1 class="text-xl font-semibold text-blue-950">ภาระงานทั้งหมด</h1>
@@ -71,38 +95,35 @@
                     <option value="start_date_desc">เรียงตามวันสั่งงาน</option>
                 </select>
             </div>
-
             <div id="loading-tasks" class="text-center py-12 hide">
                 <i class="fas fa-circle-notch fa-spin text-2xl text-blue-400"></i>
             </div>
-
             <div id="tasks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         </div>
 
-        <!-- Editor View: ฟอร์มเพิ่มงาน -->
+        <!-- ===================================== -->
+        <!-- EDITOR VIEW (หน้าฟอร์มสั่งงาน) -->
+        <!-- ===================================== -->
         <div id="view-editor" class="hide max-w-3xl mx-auto">
             <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-6 sm:p-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-semibold text-blue-900"><i class="fas fa-edit text-blue-500 mr-2"></i>เพิ่มภาระงานใหม่</h2>
+                    <h2 class="text-lg font-semibold text-blue-900"><i class="fas fa-edit text-blue-500 mr-2"></i> สั่งภาระงานใหม่</h2>
                     <button class="btn-cancel text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
                 </div>
                 
                 <form id="form-assignment" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-blue-700 mb-1">เทอม</label>
-                            <select id="f-term" required class="w-full px-3 py-2 text-sm bg-blue-50/50"></select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-blue-700 mb-1">วิชา</label>
-                            <select id="f-subject" required class="w-full px-3 py-2 text-sm bg-blue-50/50" disabled></select>
+                            <label class="block text-xs font-medium text-blue-700 mb-1">เลือกวิชา (เฉพาะเทอมปัจจุบัน)</label>
+                            <select id="f-subject" required class="w-full px-3 py-2 text-sm bg-blue-50/50"></select>
                         </div>
                     </div>
-
+                    
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="sm:col-span-1">
+                        <div class="sm:col-span-1 relative">
                             <label class="block text-xs font-medium text-blue-700 mb-1">ลำดับงาน</label>
-                            <input type="number" id="f-order" min="1" required class="w-full px-3 py-2 text-sm">
+                            <input type="number" id="f-order" required readonly class="w-full px-3 py-2 text-sm bg-gray-100 text-gray-500 font-bold border-gray-200 cursor-not-allowed">
+                            <span class="absolute right-3 top-[30px] text-[10px] text-gray-400">อัตโนมัติ</span>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-medium text-blue-700 mb-1">รูปแบบงาน</label>
@@ -112,17 +133,14 @@
                             </select>
                         </div>
                     </div>
-
                     <div>
-                        <label class="block text-xs font-medium text-blue-700 mb-1">หัวข้อ</label>
-                        <input type="text" id="f-topic" required class="w-full px-3 py-2 text-sm">
+                        <label class="block text-xs font-medium text-blue-700 mb-1">หัวข้อ / ชื่อชิ้นงาน</label>
+                        <input type="text" id="f-topic" required class="w-full px-3 py-2 text-sm" placeholder="เช่น รายงานบทที่ 1">
                     </div>
-
                     <div>
                         <label class="block text-xs font-medium text-blue-700 mb-1">รายละเอียด</label>
-                        <textarea id="f-details" rows="2" class="w-full px-3 py-2 text-sm"></textarea>
+                        <textarea id="f-details" rows="3" class="w-full px-3 py-2 text-sm"></textarea>
                     </div>
-
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-blue-700 mb-1">สั่งงาน</label>
@@ -133,32 +151,36 @@
                             <input type="datetime-local" id="f-end" required class="w-full px-3 py-2 text-sm">
                         </div>
                     </div>
-
                     <div>
-                        <label class="block text-xs font-medium text-blue-700 mb-1">รูปภาพ (ถ้ามี)</label>
+                        <label class="block text-xs font-medium text-blue-700 mb-1">รูปภาพแนบ (ถ้ามี)</label>
                         <input type="file" id="f-images" multiple accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:border-0 file:rounded-md file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition cursor-pointer">
+                        <!-- พื้นที่แสดงพรีวิวรูปภาพ -->
+                        <div id="image-previews" class="flex flex-wrap gap-3 mt-3"></div>
                     </div>
-
-                    <div class="pt-5">
-                        <button type="submit" id="btn-submit" class="w-full btn-primary py-2.5 text-sm font-medium shadow-md transition">บันทึกและแจ้งเตือน</button>
+                    
+                    <div class="pt-3 border-t border-gray-100 flex justify-between items-center">
+                        <label class="flex items-center text-sm text-slate-700 cursor-pointer font-medium bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                            <input type="checkbox" id="f-notify" checked class="mr-2 text-blue-600 rounded focus:ring-blue-500 w-4 h-4">
+                            <i class="fab fa-telegram text-blue-500 mr-1.5 text-lg"></i> แจ้งเตือนเข้า Telegram
+                        </label>
+                        <button type="submit" id="btn-submit" class="btn-primary py-2 px-6 text-sm font-medium shadow-md transition">บันทึกข้อมูล</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Admin View: จัดการระบบ -->
-        <div id="view-admin" class="hide max-w-5xl mx-auto space-y-6">
-            <div class="flex justify-between items-center mb-2">
+        <!-- ===================================== -->
+        <!-- ADMIN VIEW (ระบบหลังบ้าน) -->
+        <!-- ===================================== -->
+        <div id="view-admin" class="hide max-w-4xl mx-auto space-y-6">
+            <div class="flex justify-between items-center mb-2 px-2">
                 <h1 class="text-xl font-semibold text-blue-900"><i class="fas fa-shield-alt text-blue-500 mr-2"></i>ระบบจัดการหลังบ้าน (Admin)</h1>
-                <button class="btn-cancel text-gray-500 hover:text-blue-600 text-sm transition"><i class="fas fa-arrow-left mr-1"></i> กลับหน้าหลัก</button>
+                <button class="btn-cancel text-gray-500 hover:text-blue-600 text-sm transition font-medium"><i class="fas fa-arrow-left mr-1"></i> กลับหน้าหลัก</button>
             </div>
 
-            <!-- ส่วนที่ 1: จัดการเทอม -->
+            <!-- 1. จัดการเทอม -->
             <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-5">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-medium text-blue-800 text-lg">1. จัดการเทอมและปีการศึกษา</h2>
-                    <button onclick="fetchAllTerms()" class="text-xs text-blue-500 hover:text-blue-700 transition"><i class="fas fa-sync-alt mr-1"></i>รีเฟรชข้อมูล</button>
-                </div>
+                <h2 class="font-medium text-blue-800 text-lg mb-4"><i class="fas fa-calendar-alt text-blue-400 mr-2"></i>1. จัดการเทอมและปีการศึกษา</h2>
                 
                 <form id="form-term" class="flex flex-col sm:flex-row gap-3 mb-4 items-end bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
                     <div>
@@ -176,30 +198,23 @@
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm transition font-medium h-[34px]">เพิ่มเทอม</button>
                 </form>
-
                 <div class="overflow-x-auto border border-blue-50 rounded-xl">
                     <table class="w-full text-sm text-left text-slate-600">
                         <thead class="text-xs text-blue-700 bg-blue-50/70">
-                            <tr>
-                                <th class="px-4 py-3 font-medium">เทอม/ปีการศึกษา</th>
-                                <th class="px-4 py-3 font-medium">สถานะ</th>
-                                <th class="px-4 py-3 font-medium text-right">การจัดการ</th>
-                            </tr>
+                            <tr><th class="px-4 py-3 font-medium">เทอม/ปีการศึกษา</th><th class="px-4 py-3 font-medium">สถานะ</th><th class="px-4 py-3 font-medium text-right">การจัดการ</th></tr>
                         </thead>
                         <tbody id="terms-table-body" class="divide-y divide-blue-50"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ส่วนที่ 2: จัดการรายวิชาและครูผู้สอน -->
+            <!-- 2. จัดการรายวิชา -->
             <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-5">
-                <h2 class="font-medium text-blue-800 text-lg mb-4">2. จัดการรายวิชาและครูผู้สอน</h2>
-                
+                <h2 class="font-medium text-blue-800 text-lg mb-4"><i class="fas fa-book text-blue-400 mr-2"></i>2. จัดการรายวิชาและครูผู้สอน</h2>
                 <div class="flex items-center gap-3 mb-4">
-                    <label class="text-sm text-slate-600 font-medium">เลือกเทอมเพื่อจัดการวิชา:</label>
-                    <select id="admin-term-select" class="px-3 py-1.5 text-sm w-48 bg-white border-blue-200" onchange="loadAdminSubjects()"></select>
+                    <label class="text-sm text-slate-600 font-medium">เลือกเทอม:</label>
+                    <select id="admin-term-select" class="px-3 py-1.5 text-sm w-48 bg-white border-blue-200 rounded-lg" onchange="loadAdminSubjects()"></select>
                 </div>
-
                 <form id="form-add-subject" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
                     <div>
                         <label class="block text-xs text-blue-600 mb-1">รหัสวิชา</label>
@@ -217,40 +232,42 @@
                         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-sm transition font-medium h-[34px]">เพิ่มวิชา</button>
                     </div>
                 </form>
-
                 <div class="overflow-x-auto border border-blue-50 rounded-xl">
                     <table class="w-full text-sm text-left text-slate-600">
                         <thead class="text-xs text-blue-700 bg-blue-50/70">
-                            <tr>
-                                <th class="px-4 py-3 font-medium">รหัสวิชา</th>
-                                <th class="px-4 py-3 font-medium">ชื่อวิชา</th>
-                                <th class="px-4 py-3 font-medium">ครูผู้สอน</th>
-                                <th class="px-4 py-3 font-medium text-right">การจัดการ</th>
-                            </tr>
+                            <tr><th class="px-4 py-3 font-medium">รหัสวิชา</th><th class="px-4 py-3 font-medium">ชื่อวิชา</th><th class="px-4 py-3 font-medium">ครูผู้สอน</th><th class="px-4 py-3 font-medium text-right">จัดการ</th></tr>
                         </thead>
-                        <tbody id="subjects-table-body" class="divide-y divide-blue-50">
-                            <tr><td colspan="4" class="text-center py-4 text-slate-400">กรุณาเลือกเทอมด้านบน</td></tr>
-                        </tbody>
+                        <tbody id="subjects-table-body" class="divide-y divide-blue-50"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ส่วนที่ 3: จัดการบัญชี -->
+            <!-- 3. จัดการบัญชี Editor -->
             <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-5">
-                <h2 class="font-medium text-blue-800 text-lg mb-2">3. เพิ่มบัญชีคุณครู (Editor)</h2>
-                <p class="text-xs text-red-500 bg-red-50 p-2 rounded-lg mb-4"><i class="fas fa-info-circle mr-1"></i> เพื่อความปลอดภัยขั้นสูงสุดของระบบ การ<b>เปลี่ยนรหัสผ่าน</b> หรือ <b>ลบบัญชีครู</b> แอดมินต้องเข้าไปดำเนินการที่หน้าต่างจัดการของ Supabase (เมนู Authentication) โดยตรงเท่านั้น</p>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-medium text-blue-800 text-lg"><i class="fas fa-users text-blue-400 mr-2"></i>3. รายชื่อบัญชีครู (Editors)</h2>
+                </div>
                 
-                <form id="form-editor" class="flex flex-col sm:flex-row gap-3 items-end">
+                <form id="form-editor" class="flex flex-col sm:flex-row gap-3 items-end mb-5 bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
                     <div class="w-full sm:w-1/3">
-                        <label class="block text-xs text-blue-600 mb-1">Username (ภาษาอังกฤษ)</label>
-                        <input type="text" id="f-editor-user" required class="w-full px-3 py-1.5 text-sm lowercase" pattern="[a-zA-Z0-9]+">
+                        <label class="block text-xs text-blue-600 mb-1">สร้าง Username ใหม่ (ภาษาอังกฤษ)</label>
+                        <input type="text" id="f-editor-user" required class="w-full px-3 py-1.5 text-sm lowercase bg-white" pattern="[a-zA-Z0-9]+" placeholder="เช่น teacher01">
                     </div>
                     <div class="w-full sm:w-1/3">
                         <label class="block text-xs text-blue-600 mb-1">รหัสผ่าน (6 ตัวขึ้นไป)</label>
-                        <input type="password" id="f-editor-pass" required minlength="6" class="w-full px-3 py-1.5 text-sm">
+                        <input type="password" id="f-editor-pass" required minlength="6" class="w-full px-3 py-1.5 text-sm bg-white" placeholder="******">
                     </div>
-                    <button type="submit" class="w-full sm:w-1/3 bg-slate-800 hover:bg-slate-900 text-white py-1.5 rounded-lg text-sm transition font-medium h-[34px]">สร้างบัญชี</button>
+                    <button type="submit" class="w-full sm:w-1/3 bg-slate-800 hover:bg-slate-900 text-white py-1.5 rounded-lg text-sm transition font-medium h-[34px]">สร้างบัญชีใหม่</button>
                 </form>
+
+                <div class="overflow-x-auto border border-blue-50 rounded-xl">
+                    <table class="w-full text-sm text-left text-slate-600">
+                        <thead class="text-xs text-blue-700 bg-blue-50/70">
+                            <tr><th class="px-4 py-3 font-medium">ชื่อบัญชีผู้ใช้ (Username)</th><th class="px-4 py-3 font-medium">สิทธิ์</th><th class="px-4 py-3 font-medium text-right">การจัดการ</th></tr>
+                        </thead>
+                        <tbody id="editors-table-body" class="divide-y divide-blue-50"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -260,7 +277,9 @@
         HW Tracker © 2026 | ระบบจัดการภาระงาน
     </footer>
 
-    <!-- JAVASCRIPT -->
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC -->
+    <!-- ========================================== -->
     <script>
         // --- [ Config ] ---
         const SUPABASE_URL = 'https://evizikofpasozwermgja.supabase.co';
@@ -269,15 +288,14 @@
         const DOMAIN_SUFFIX = '@hw.local'; 
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let currentUser = null;
-        let userRole = null;
-        let globalAssignments = [];
+        let currentUser = null, userRole = null, globalAssignments = [];
         
-        // Utils
+        // ตัวแปรสำหรับเก็บไฟล์รูปภาพที่ผู้ใช้เลือก
+        let selectedFiles = []; 
+        
         const escapeQuote = str => str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
 
-        // Views
         const viewPublic = document.getElementById('view-public');
         const viewEditor = document.getElementById('view-editor');
         const viewAdmin = document.getElementById('view-admin');
@@ -300,9 +318,7 @@
                 const { data: roleData } = await supabaseClient.from('users_role').select('role').eq('user_id', currentUser.id).single();
                 if(roleData && roleData.role === 'admin') document.getElementById('btn-admin').classList.remove('hide');
             }
-            supabaseClient.auth.onAuthStateChange((event) => {
-                if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') window.location.reload();
-            });
+            supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') window.location.reload(); });
         }
 
         document.getElementById('btn-login').onclick = async () => {
@@ -312,14 +328,12 @@
                     <div class="flex flex-col gap-4 text-left mt-2 px-1">
                         <div>
                             <label class="block text-xs text-blue-600 mb-1 ml-1 font-medium">Username</label>
-                            <input id="swal-user" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition outline-none" placeholder="กรอกชื่อผู้ใช้">
+                            <input id="swal-user" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition outline-none" placeholder="กรอกชื่อผู้ใช้">
                         </div>
                         <div class="relative">
                             <label class="block text-xs text-blue-600 mb-1 ml-1 font-medium">Password</label>
-                            <input id="swal-pass" type="password" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition outline-none pr-10" placeholder="กรอกรหัสผ่าน">
-                            <button type="button" id="toggle-pass" class="absolute right-3 top-[28px] text-gray-400 hover:text-blue-600 transition p-1">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                            <input id="swal-pass" type="password" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 transition outline-none pr-10" placeholder="กรอกรหัสผ่าน">
+                            <button type="button" id="toggle-pass" class="absolute right-3 top-[28px] text-gray-400 hover:text-blue-600 transition p-1"><i class="fas fa-eye"></i></button>
                         </div>
                     </div>
                 `,
@@ -352,7 +366,7 @@
 
         document.getElementById('btn-logout').onclick = () => supabaseClient.auth.signOut();
 
-        // --- PUBLIC VIEW (Assignments) ---
+        // --- PUBLIC VIEW ---
         async function fetchAssignments() {
             document.getElementById('loading-tasks').classList.remove('hide');
             const { data, error } = await supabaseClient.from('assignments')
@@ -376,18 +390,26 @@
                 const subj = task.subjects;
                 const imgs = task.images_data || [];
                 const imgThumb = imgs.length > 0 ? `<img src="${imgs[0].lh_url}" class="w-full h-32 object-cover rounded-lg mt-3 cursor-pointer shadow-sm" onclick="window.open('${imgs[0].lh_url}')">` : '';
-                const deleteBtn = currentUser ? `<button onclick="deleteTask(${task.id})" class="absolute top-3 right-3 text-red-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition"><i class="fas fa-trash-alt"></i></button>` : '';
+                
+                // เมนูจัดการงาน (Edit / Delete) แสดงเฉพาะตอนล็อกอิน
+                const actionBtns = currentUser ? `
+                    <div class="absolute top-3 right-3 flex gap-1 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-slate-100 p-1">
+                        <button onclick="editTask(${task.id})" class="text-blue-400 hover:text-blue-600 hover:bg-blue-50 w-7 h-7 flex items-center justify-center rounded transition" title="แก้ไขข้อความ"><i class="fas fa-pen text-xs"></i></button>
+                        <button onclick="deleteTask(${task.id}, '${escapeQuote(JSON.stringify(imgs))}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 w-7 h-7 flex items-center justify-center rounded transition" title="ลบงาน"><i class="fas fa-trash-alt text-xs"></i></button>
+                    </div>
+                ` : '';
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-blue-50 shadow-sm rounded-2xl p-5 relative hover:shadow-md transition-all flex flex-col h-full">
-                        ${deleteBtn}
+                        ${actionBtns}
                         <div class="flex items-center gap-2 mb-3">
                             <span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-1 rounded-md font-medium">${subj.subject_code}</span>
                             <span class="bg-indigo-50 text-indigo-600 text-[10px] px-2 py-1 rounded-md">${task.work_type}</span>
+                            <span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-md">ชิ้นที่ ${task.order_num}</span>
                         </div>
-                        <h3 class="font-medium text-blue-950 text-sm mb-1 pr-6">${task.topic}</h3>
+                        <h3 class="font-medium text-blue-950 text-sm mb-1 pr-14">${task.topic}</h3>
                         <p class="text-xs text-blue-500 mb-2"><i class="fas fa-user-tie mr-1 opacity-70"></i>${subj.teacher_name}</p>
-                        <div class="text-xs text-slate-600 bg-slate-50/50 p-2.5 rounded-lg flex-grow mb-2 line-clamp-3">${task.details || '-'}</div>
+                        <div class="text-xs text-slate-600 bg-slate-50/50 p-2.5 rounded-lg flex-grow mb-2 whitespace-pre-wrap">${task.details || '-'}</div>
                         ${imgThumb}
                         <div class="border-t border-blue-50 pt-3 mt-4">
                             <div class="text-center p-2 rounded-lg bg-blue-50 text-xs font-mono text-blue-800 timer-container" data-end="${task.end_date}">
@@ -417,12 +439,69 @@
             });
         }
 
-        async function deleteTask(id) {
-            if(confirm('ยืนยันการลบภาระงานนี้?')) {
-                await supabaseClient.from('assignments').delete().eq('id', id);
-                Toast.fire({ icon: 'success', title: 'ลบสำเร็จ' });
+        // ฟังก์ชันแก้ไขงาน
+        async function editTask(id) {
+            const task = globalAssignments.find(t => t.id === id);
+            if(!task) return;
+            
+            const { value: formValues } = await Swal.fire({
+                title: 'แก้ไขข้อมูลภาระงาน',
+                html: `
+                    <div class="text-left space-y-3 mt-4">
+                        <div>
+                            <label class="text-xs text-slate-600 font-medium">หัวข้อ</label>
+                            <input id="edit-topic" class="swal2-input !mt-1 !w-full !m-0 text-sm" value="${task.topic}">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-600 font-medium">รายละเอียด</label>
+                            <textarea id="edit-details" class="swal2-textarea !mt-1 !w-full !m-0 text-sm" rows="3">${task.details || ''}</textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs text-slate-600 font-medium">วันสั่งงาน</label>
+                                <input type="datetime-local" id="edit-start" class="swal2-input !mt-1 !w-full !m-0 text-sm" value="${task.start_date.slice(0,16)}">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-600 font-medium">กำหนดส่ง</label>
+                                <input type="datetime-local" id="edit-end" class="swal2-input !mt-1 !w-full !m-0 text-sm" value="${task.end_date.slice(0,16)}">
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-orange-500 bg-orange-50 p-2 rounded"><i class="fas fa-exclamation-triangle"></i> หากต้องการเปลี่ยนรูปภาพ กรุณาลบงานนี้ทิ้งแล้วสั่งใหม่ครับ</p>
+                    </div>
+                `,
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
+                preConfirm: () => {
+                    return {
+                        topic: document.getElementById('edit-topic').value,
+                        details: document.getElementById('edit-details').value,
+                        start_date: document.getElementById('edit-start').value,
+                        end_date: document.getElementById('edit-end').value,
+                    }
+                }
+            });
+
+            if(formValues) {
+                Swal.fire({title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading()});
+                await supabaseClient.from('assignments').update(formValues).eq('id', id);
+                Toast.fire({ icon: 'success', title: 'อัปเดตข้อมูลสำเร็จ' });
                 fetchAssignments();
             }
+        }
+
+        // ฟังก์ชันลบงาน
+        async function deleteTask(id, imagesDataStr) {
+            Swal.fire({ title: 'ต้องการลบงานนี้หรือไม่?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'ลบข้อมูล'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const images = JSON.parse(imagesDataStr.replace(/&quot;/g, '"'));
+                        for (let img of images) fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: img.file_id }) });
+                    } catch(e) {}
+                    
+                    await supabaseClient.from('assignments').delete().eq('id', id);
+                    Toast.fire({ icon: 'success', title: 'ลบสำเร็จ' }); fetchAssignments();
+                }
+            });
         }
 
         // --- NAVIGATION ---
@@ -430,15 +509,140 @@
             [viewPublic, viewEditor, viewAdmin].forEach(v => v.classList.add('hide'));
             view.classList.remove('hide');
         }
-        document.getElementById('btn-show-add').onclick = () => { switchView(viewEditor); loadEditorTermsDropdown(); };
-        document.getElementById('btn-admin').onclick = () => { switchView(viewAdmin); fetchAllTerms(); };
+        document.getElementById('btn-show-add').onclick = () => { switchView(viewEditor); initEditorForm(); };
+        document.getElementById('btn-admin').onclick = () => { switchView(viewAdmin); fetchAllTerms(); fetchAllEditors(); };
         document.querySelectorAll('.btn-cancel').forEach(btn => btn.onclick = () => switchView(viewPublic));
+
+        // ==========================================
+        // EDITOR PANEL (Form สั่งงาน)
+        // ==========================================
+        
+        // จัดการรูปภาพพรีวิว
+        const fileInput = document.getElementById('f-images');
+        const previewContainer = document.getElementById('image-previews');
+        
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            selectedFiles = selectedFiles.concat(files);
+            renderPreviews();
+            fileInput.value = ''; // รีเซ็ต input เพื่อให้เลือกไฟล์เดิมซ้ำได้ถ้าเผลอลบ
+        });
+
+        function renderPreviews() {
+            previewContainer.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const url = URL.createObjectURL(file);
+                previewContainer.insertAdjacentHTML('beforeend', `
+                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                        <img src="${url}" class="w-full h-full object-cover">
+                        <div onclick="removeImage(${index})" class="preview-remove-btn"><i class="fas fa-times"></i></div>
+                    </div>
+                `);
+            });
+        }
+
+        function removeImage(index) {
+            selectedFiles.splice(index, 1);
+            renderPreviews();
+        }
+
+        // ดึงเทอมปัจจุบันอัตโนมัติ
+        async function initEditorForm() {
+            document.getElementById('form-assignment').reset();
+            selectedFiles = []; renderPreviews();
+            document.getElementById('f-order').value = '';
+            
+            // ตั้งค่าเวลา Default
+            const now = new Date();
+            document.getElementById('f-start').value = now.toISOString().slice(0,16);
+            now.setDate(now.getDate() + 7);
+            document.getElementById('f-end').value = now.toISOString().slice(0,16);
+
+            // หาเทอมปัจจุบัน
+            const { data: term } = await supabaseClient.from('terms').select('*').eq('is_active', true).single();
+            if(!term) {
+                Swal.fire('ข้อผิดพลาด', 'ยังไม่มีการตั้งค่าเทอมปัจจุบัน กรุณาแจ้งแอดมิน', 'error');
+                return;
+            }
+            
+            // โหลดวิชาของเทอมปัจจุบัน
+            const { data: subjects } = await supabaseClient.from('subjects').select('*').eq('term_id', term.id).order('subject_code');
+            const sel = document.getElementById('f-subject');
+            sel.innerHTML = '<option value="">-- เลือกรหัสวิชา --</option>';
+            subjects?.forEach(s => sel.innerHTML += `<option value="${s.id}">${s.subject_code} - ${s.subject_name}</option>`);
+        }
+
+        // รันลำดับงานอัตโนมัติเมื่อเลือกวิชา
+        document.getElementById('f-subject').onchange = async (e) => {
+            const subjId = e.target.value;
+            const orderInput = document.getElementById('f-order');
+            if(!subjId) { orderInput.value = ''; return; }
+            
+            // นับว่าวิชานี้มีงานกี่ชิ้นแล้ว
+            const { data: assigns } = await supabaseClient.from('assignments').select('order_num').eq('subject_id', subjId);
+            let nextOrder = 1;
+            if (assigns && assigns.length > 0) {
+                nextOrder = Math.max(...assigns.map(a => a.order_num)) + 1;
+            }
+            orderInput.value = nextOrder;
+        };
+
+        const getBase64 = file => new Promise((res, rej) => {
+            const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => res({ name: file.name, mimeType: file.type, base64: reader.result.split(',')[1] }); reader.onerror = rej;
+        });
+
+        document.getElementById('form-assignment').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit'); 
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
+            
+            try {
+                // อัปโหลดไฟล์ไป Google Drive ผ่าน GAS
+                let imgs = [];
+                if(selectedFiles.length > 0) {
+                    const base64Files = await Promise.all(selectedFiles.map(getBase64));
+                    const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
+                    const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
+                    if(res.status === 'success') imgs = res.data;
+                }
+
+                // บันทึกลง Supabase
+                const newAssign = {
+                    subject_id: document.getElementById('f-subject').value, order_num: document.getElementById('f-order').value, work_type: document.getElementById('f-type').value,
+                    topic: document.getElementById('f-topic').value, details: document.getElementById('f-details').value, start_date: document.getElementById('f-start').value,
+                    end_date: document.getElementById('f-end').value, images_data: imgs
+                };
+                await supabaseClient.from('assignments').insert([newAssign]);
+
+                // ตรวจสอบว่าต้องการแจ้งเตือน Telegram ไหม
+                const isNotify = document.getElementById('f-notify').checked;
+                if(isNotify) {
+                    const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
+                    if(sData) {
+                        const notifyForm = new URLSearchParams({ action: 'notify', payload: JSON.stringify({
+                            startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'),
+                            endDateStr: `${new Date(newAssign.end_date).toLocaleDateString('th-TH')} ${new Date(newAssign.end_date).toLocaleTimeString('th-TH').slice(0,5)} น.`,
+                            orderNum: newAssign.order_num, subjectCode: sData.subject_code, subjectName: sData.subject_name, teacherName: sData.teacher_name,
+                            topic: newAssign.topic, details: newAssign.details, workType: newAssign.work_type, images: imgs, remainingText: "ดูเวลาผ่านเว็บ", webUrl: window.location.href.split('?')[0]
+                        })});
+                        fetch(GAS_WEBAPP_URL, { method: 'POST', body: notifyForm }); 
+                    }
+                }
+                
+                Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' });
+                document.querySelector('.btn-cancel').click(); fetchAssignments();
+            } catch(err) {
+                Toast.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด' });
+            } finally { 
+                btn.disabled = false; btn.innerText = 'บันทึกข้อมูล'; 
+            }
+        };
 
         // ==========================================
         // ADMIN PANEL
         // ==========================================
 
-        // 1. จัดการเทอม (Terms)
+        // 1. จัดการเทอม 
         document.getElementById('form-term').onsubmit = async (e) => {
             e.preventDefault();
             const isActive = document.getElementById('f-term-active').checked;
@@ -449,9 +653,7 @@
                 academic_year: document.getElementById('f-term-year').value,
                 is_active: isActive
             }]);
-            Toast.fire({ icon: 'success', title: 'บันทึกเทอมสำเร็จ' });
-            e.target.reset();
-            fetchAllTerms();
+            Toast.fire({ icon: 'success', title: 'บันทึกเทอมสำเร็จ' }); e.target.reset(); fetchAllTerms();
         };
 
         async function fetchAllTerms() {
@@ -460,25 +662,15 @@
             tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">กำลังโหลด...</td></tr>';
             
             const { data } = await supabaseClient.from('terms').select('*').order('created_at', { ascending: false });
-            
-            // อัปเดตตารางเทอม
-            tbody.innerHTML = '';
-            adminSelect.innerHTML = '<option value="">-- เลือกเทอม --</option>';
+            tbody.innerHTML = ''; adminSelect.innerHTML = '<option value="">-- เลือกเทอม --</option>';
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">ไม่มีข้อมูลเทอม</td></tr>';
-                return;
-            }
+            if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">ไม่มีข้อมูลเทอม</td></tr>'; return; }
 
             data.forEach(term => {
-                // เติม Dropdown ในส่วนวิชา
-                adminSelect.innerHTML += `<option value="${term.id}">${term.semester}/${term.academic_year} ${term.is_active ? '(ปัจจุบัน)' : ''}</option>`;
-
-                // เติมตาราง
+                adminSelect.innerHTML += `<option value="${term.id}">เทอม ${term.semester}/${term.academic_year} ${term.is_active ? '(ปัจจุบัน)' : ''}</option>`;
                 const badge = term.is_active 
                     ? `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-medium"><i class="fas fa-check-circle mr-1"></i>ปัจจุบัน</span>` 
                     : `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-[10px]">อดีต</span>`;
-                
                 const actionBtn = term.is_active ? '' : `<button onclick="setTermActive(${term.id})" class="text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded transition mr-2">ตั้งเป็นปัจจุบัน</button>`;
 
                 tbody.insertAdjacentHTML('beforeend', `
@@ -493,7 +685,6 @@
                     </tr>
                 `);
             });
-            // โหลดวิชาของเทอมล่าสุดมาโชว์ก่อนเลย (ถ้ามี)
             if(data.length > 0) { adminSelect.value = data[0].id; loadAdminSubjects(); }
         }
 
@@ -506,38 +697,24 @@
 
         async function editTerm(id, sem, year) {
             const { value: form } = await Swal.fire({
-                title: 'แก้ไขเทอม',
-                html: `<input id="e-sem" class="swal2-input" placeholder="เทอม" value="${sem}"><input id="e-year" class="swal2-input" placeholder="ปีการศึกษา" value="${year}">`,
+                title: 'แก้ไขเทอม', html: `<input id="e-sem" class="swal2-input" placeholder="เทอม" value="${sem}"><input id="e-year" class="swal2-input" placeholder="ปีการศึกษา" value="${year}">`,
                 preConfirm: () => ({ sem: document.getElementById('e-sem').value, year: document.getElementById('e-year').value })
             });
-            if(form) {
-                await supabaseClient.from('terms').update({ semester: form.sem, academic_year: form.year }).eq('id', id);
-                Toast.fire({ icon: 'success', title: 'แก้ไขสำเร็จ' }); fetchAllTerms();
-            }
+            if(form) { await supabaseClient.from('terms').update({ semester: form.sem, academic_year: form.year }).eq('id', id); Toast.fire({ icon: 'success', title: 'แก้ไขสำเร็จ' }); fetchAllTerms(); }
         }
 
         async function deleteTerm(id) {
-            if(confirm('ลบเทอมนี้? ข้อมูลวิชาและงานในเทอมนี้จะหายไปด้วย!')) {
-                await supabaseClient.from('terms').delete().eq('id', id);
-                Toast.fire({ icon: 'success', title: 'ลบแล้ว' }); fetchAllTerms();
-            }
+            if(confirm('ลบเทอมนี้? ข้อมูลวิชาและงานจะหายไปด้วย!')) { await supabaseClient.from('terms').delete().eq('id', id); Toast.fire({ icon: 'success', title: 'ลบแล้ว' }); fetchAllTerms(); }
         }
 
-        // 2. จัดการรายวิชาและครูผู้สอน (Subjects)
+        // 2. จัดการรายวิชา
         document.getElementById('form-add-subject').onsubmit = async (e) => {
             e.preventDefault();
             const termId = document.getElementById('admin-term-select').value;
-            if(!termId) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกเทอมด้านบนก่อน', 'warning');
+            if(!termId) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกเทอมก่อน', 'warning');
             
-            await supabaseClient.from('subjects').insert([{
-                term_id: termId,
-                subject_code: document.getElementById('f-sub-code').value,
-                subject_name: document.getElementById('f-sub-name').value,
-                teacher_name: document.getElementById('f-sub-teacher').value
-            }]);
-            Toast.fire({ icon: 'success', title: 'เพิ่มวิชาสำเร็จ' });
-            e.target.reset();
-            loadAdminSubjects();
+            await supabaseClient.from('subjects').insert([{ term_id: termId, subject_code: document.getElementById('f-sub-code').value, subject_name: document.getElementById('f-sub-name').value, teacher_name: document.getElementById('f-sub-teacher').value }]);
+            Toast.fire({ icon: 'success', title: 'เพิ่มวิชาสำเร็จ' }); e.target.reset(); loadAdminSubjects();
         };
 
         async function loadAdminSubjects() {
@@ -549,14 +726,12 @@
             const { data } = await supabaseClient.from('subjects').select('*').eq('term_id', termId).order('subject_code');
             
             tbody.innerHTML = '';
-            if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">ยังไม่มีรายวิชาในเทอมนี้</td></tr>'; return; }
+            if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">ยังไม่มีรายวิชา</td></tr>'; return; }
 
             data.forEach(sub => {
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-blue-50/30 transition">
-                        <td class="px-4 py-2 font-medium text-blue-700">${sub.subject_code}</td>
-                        <td class="px-4 py-2">${sub.subject_name}</td>
-                        <td class="px-4 py-2">${sub.teacher_name}</td>
+                        <td class="px-4 py-2 font-medium text-blue-700">${sub.subject_code}</td><td class="px-4 py-2">${sub.subject_name}</td><td class="px-4 py-2">${sub.teacher_name}</td>
                         <td class="px-4 py-2 text-right">
                             <button onclick="editSubject(${sub.id}, '${sub.subject_code}', '${sub.subject_name}', '${sub.teacher_name}')" class="text-slate-400 hover:text-blue-500 px-1"><i class="fas fa-pen"></i></button>
                             <button onclick="deleteSubject(${sub.id})" class="text-slate-400 hover:text-red-500 px-1 ml-2"><i class="fas fa-trash"></i></button>
@@ -568,28 +743,14 @@
 
         async function editSubject(id, code, name, teacher) {
             const { value: form } = await Swal.fire({
-                title: 'แก้ไขรายวิชา',
-                html: `
-                    <input id="e-sub-code" class="swal2-input text-sm" placeholder="รหัสวิชา" value="${code}">
-                    <input id="e-sub-name" class="swal2-input text-sm" placeholder="ชื่อวิชา" value="${name}">
-                    <input id="e-sub-teacher" class="swal2-input text-sm" placeholder="ครูผู้สอน" value="${teacher}">
-                `,
+                title: 'แก้ไขรายวิชา', html: `<input id="e-sub-code" class="swal2-input text-sm" placeholder="รหัสวิชา" value="${code}"><input id="e-sub-name" class="swal2-input text-sm" placeholder="ชื่อวิชา" value="${name}"><input id="e-sub-teacher" class="swal2-input text-sm" placeholder="ครูผู้สอน" value="${teacher}">`,
                 preConfirm: () => ({ code: document.getElementById('e-sub-code').value, name: document.getElementById('e-sub-name').value, teacher: document.getElementById('e-sub-teacher').value })
             });
-            if(form) {
-                await supabaseClient.from('subjects').update({ subject_code: form.code, subject_name: form.name, teacher_name: form.teacher }).eq('id', id);
-                Toast.fire({ icon: 'success', title: 'อัปเดตวิชาแล้ว' }); loadAdminSubjects();
-            }
+            if(form) { await supabaseClient.from('subjects').update({ subject_code: form.code, subject_name: form.name, teacher_name: form.teacher }).eq('id', id); Toast.fire({ icon: 'success', title: 'อัปเดตวิชาแล้ว' }); loadAdminSubjects(); }
         }
+        async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); Toast.fire({ icon: 'success', title: 'ลบแล้ว' }); loadAdminSubjects(); } }
 
-        async function deleteSubject(id) {
-            if(confirm('ลบวิชานี้? (งานสั่งของวิชานี้จะหายไปด้วย)')) {
-                await supabaseClient.from('subjects').delete().eq('id', id);
-                Toast.fire({ icon: 'success', title: 'ลบแล้ว' }); loadAdminSubjects();
-            }
-        }
-
-        // 3. จัดการบัญชี Editor (Signup)
+        // 3. จัดการบัญชี
         document.getElementById('form-editor').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้าง...', didOpen: () => Swal.showLoading()});
@@ -597,60 +758,36 @@
             const { data, error } = await supabaseClient.auth.signUp({ email: user + DOMAIN_SUFFIX, password: document.getElementById('f-editor-pass').value });
             
             if(error) { Toast.fire({ icon: 'error', title: 'Username ซ้ำหรือผิดพลาด' }); return; }
-            await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: 'editor' }]);
+            await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: 'editor', username: user }]); 
             
-            Swal.fire({
-                title: 'สำเร็จ', html: 'สร้างบัญชีครูเรียบร้อย!<br><span class="text-sm text-red-500">ระบบจะทำการล็อกเอาท์เพื่อให้คุณล็อกอินใหม่</span>', icon: 'success'
+            Swal.fire({ title: 'สำเร็จ', html: 'สร้างบัญชีครูแล้ว!<br><span class="text-sm text-red-500">ระบบจะทำการล็อกเอาท์เพื่อให้คุณล็อกอินใหม่</span>', icon: 'success', confirmButtonColor: '#3b82f6'
             }).then(() => supabaseClient.auth.signOut());
         };
 
-        // ==========================================
-        // EDITOR PANEL (Add Assignment)
-        // ==========================================
-        async function loadEditorTermsDropdown() {
-            const { data } = await supabaseClient.from('terms').select('*').eq('is_active', true);
-            const sel = document.getElementById('f-term');
-            sel.innerHTML = '<option value="">-- เลือกเทอม --</option>';
-            data?.forEach(t => sel.innerHTML += `<option value="${t.id}">เทอม ${t.semester}/${t.academic_year}</option>`);
+        async function fetchAllEditors() {
+            const tbody = document.getElementById('editors-table-body');
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">กำลังโหลดบัญชี...</td></tr>';
+            const { data } = await supabaseClient.from('users_role').select('*');
+            tbody.innerHTML = '';
+            if (!data) return;
+
+            data.forEach(user => {
+                const badge = user.role === 'admin' ? '<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-medium">Admin</span>' : '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px]">Editor</span>';
+                const name = user.username || 'ไม่ระบุชื่อ (บัญชีเก่า)';
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-blue-50/30 transition">
+                        <td class="px-4 py-2 font-medium"><i class="fas fa-user-circle text-slate-300 mr-2"></i>${name}</td><td class="px-4 py-2">${badge}</td>
+                        <td class="px-4 py-2 text-right">
+                            <button onclick="promptDeleteUser()" class="text-xs text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition"><i class="fas fa-trash"></i> ลบ</button>
+                        </td>
+                    </tr>
+                `);
+            });
         }
 
-        document.getElementById('f-term').onchange = async (e) => {
-            const termId = e.target.value;
-            const sel = document.getElementById('f-subject');
-            if(!termId) return sel.disabled = true;
-            
-            const { data } = await supabaseClient.from('subjects').select('*').eq('term_id', termId).order('subject_code');
-            sel.innerHTML = '<option value="">-- เลือกรหัสวิชา --</option>';
-            data?.forEach(s => sel.innerHTML += `<option value="${s.id}">${s.subject_code} - ${s.subject_name}</option>`);
-            sel.disabled = false;
-        };
-
-        document.getElementById('form-assignment').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btn-submit');
-            btn.disabled = true; btn.innerText = 'กำลังบันทึก...';
-            
-            try {
-                // (ถ้ามีอัปโหลดรูป ให้ทำฝั่ง GAS ที่นี่ - โค้ดเดิมสามารถนำมาใส่เสริมได้)
-                await supabaseClient.from('assignments').insert([{
-                    subject_id: document.getElementById('f-subject').value,
-                    order_num: document.getElementById('f-order').value,
-                    work_type: document.getElementById('f-type').value,
-                    topic: document.getElementById('f-topic').value,
-                    details: document.getElementById('f-details').value,
-                    start_date: document.getElementById('f-start').value,
-                    end_date: document.getElementById('f-end').value,
-                    images_data: []
-                }]);
-                Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' });
-                document.querySelector('.btn-cancel').click();
-                fetchAssignments();
-            } catch(err) {
-                Toast.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด' });
-            } finally {
-                btn.disabled = false; btn.innerText = 'บันทึกและแจ้งเตือน';
-            }
-        };
+        function promptDeleteUser() {
+            Swal.fire({ title: 'การลบบัญชี/เปลี่ยนรหัสผ่าน', html: 'เพื่อความปลอดภัยขั้นสูงสุดของระบบ<br>กรุณาให้แอดมินเข้าไปลบบัญชีโดยตรงที่หน้าเว็บ<br><b>Supabase > Authentication > Users</b> ครับ', icon: 'info', confirmButtonColor: '#3b82f6' });
+        }
     </script>
 </body>
 </html>
