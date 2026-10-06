@@ -14,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* นำเข้าฟอนต์ TH Sarabun PSK และ Prompt สำรอง */
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
         
         body { 
@@ -25,7 +24,6 @@
         }
         .hide { display: none !important; }
         
-        /* ดีไซน์ช่องกรอกข้อมูลและปุ่มให้ทันสมัย สบายตา */
         input, select, textarea { 
             border: 1px solid #cbd5e1 !important; 
             border-radius: 10px !important;
@@ -59,7 +57,6 @@
         }
         .preview-remove-btn:hover { background-color: #dc2626; }
 
-        /* ปรับขนาดตัวอักษรหัวข้อให้สวยงามในฟอนต์ Sarabun */
         h1, h2, h3, nav span { font-weight: 600; }
     </style>
 </head>
@@ -69,7 +66,7 @@
     <nav class="bg-white border-b border-blue-100 shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchView(viewPublic)">
                     <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-10 w-auto object-contain drop-shadow-sm rounded-md">
                     <span class="text-xl tracking-wide text-blue-900 font-bold">HW Tracker</span>
                 </div>
@@ -77,7 +74,7 @@
                     <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการระบบ</button>
                     <button id="btn-show-add" class="hide btn-primary px-4 py-2 font-medium shadow-sm shadow-blue-200 transition"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
                     <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -167,7 +164,7 @@
             </div>
         </div>
 
-        <!-- ADMIN VIEW (แดชบอร์ดหลังบ้าน) -->
+        <!-- ADMIN VIEW -->
         <div id="view-admin" class="hide max-w-5xl mx-auto space-y-8">
             <div class="flex justify-between items-center px-2">
                 <h1 class="text-2xl font-bold text-blue-900"><i class="fas fa-shield-alt text-blue-500 mr-2"></i>ระบบจัดการหลังบ้าน (Admin Dashboard)</h1>
@@ -334,6 +331,9 @@
                 document.getElementById('btn-logout').classList.add('hide');
                 document.getElementById('btn-admin').classList.add('hide');
                 document.getElementById('btn-show-add').classList.add('hide');
+                
+                // บังคับเปลี่ยนมุมมองกลับมาที่หน้าแรกทันทีเมื่อออกจากระบบ
+                switchView(viewPublic);
             }
 
             supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -375,11 +375,20 @@
                 Swal.fire({title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
                 const { error } = await supabaseClient.auth.signInWithPassword(formValues);
                 if (error) Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่ได้', text: error.message, confirmButtonColor: '#ef4444' });
-                else Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
+                else {
+                    Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
+                    switchView(viewPublic); // พามาหน้าแรกหลังล็อกอินสำเร็จ
+                }
             }
         };
 
-        document.getElementById('btn-logout').onclick = () => supabaseClient.auth.signOut();
+        // เมื่อกดออกจากระบบ ให้เคลียร์และดีดกลับมาหน้าหลัก
+        document.getElementById('btn-logout').onclick = async () => {
+            Swal.fire({title: 'กำลังออกจากระบบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            await supabaseClient.auth.signOut();
+            switchView(viewPublic);
+            Toast.fire({ icon: 'success', title: 'ออกจากระบบเรียบร้อย' });
+        };
 
         // --- PUBLIC VIEW ---
         async function fetchAssignments() {
@@ -529,7 +538,12 @@
             orderInput.value = (assigns && assigns.length > 0) ? Math.max(...assigns.map(a => a.order_num)) + 1 : 1;
         };
 
-        const getBase64 = file => new Promise((res, rej) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => res({ name: file.name, mimeType: file.type, base64: reader.result.split(',')[1] }); reader.onerror = rej; });
+        const getBase64 = file => new Promise((res, rej) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => res({ name: file.name, mimeType: file.type, base64: reader.result.split(',')[1] });
+            reader.onerror = rej;
+        });
 
         document.getElementById('form-assignment').onsubmit = async (e) => {
             e.preventDefault(); const btn = document.getElementById('btn-submit'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
@@ -560,7 +574,9 @@
                         fetch(GAS_WEBAPP_URL, { method: 'POST', body: notifyForm }); 
                     }
                 }
-                Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' }); document.querySelector('.btn-cancel').click(); fetchAssignments();
+                Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' }); 
+                switchView(viewPublic); 
+                fetchAssignments();
             } catch(err) { Toast.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด' }); } finally { btn.disabled = false; btn.innerText = 'บันทึกข้อมูล'; }
         };
 
@@ -630,7 +646,7 @@
         }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        // 3. จัดการบัญชีผู้ใช้ (แก้ไขการแจ้งเตือนไม่ให้ออกจากระบบ)
+        // 3. จัดการบัญชีผู้ใช้
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้างบัญชี...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
@@ -655,7 +671,6 @@
                 }
             }
             
-            // แจ้งเตือนสำเร็จและรีเฟรชตารางโดยไม่ต้องออกจากระบบ
             Swal.fire({ icon: 'success', title: 'สร้างบัญชีสำเร็จ', text: `สร้างบัญชีผู้ใช้ "${user}" เรียบร้อยแล้ว`, timer: 2000, showConfirmButton: false });
             e.target.reset(); 
             fetchAppUsers();
