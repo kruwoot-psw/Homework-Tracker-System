@@ -274,7 +274,7 @@
             setInterval(updateCountdowns, 60000);
         };
 
-        // --- AUTH LOGIC ---
+// --- AUTH LOGIC (แก้ไขปัญหารีเฟรชไม่หยุด) ---
         async function checkUserSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
@@ -288,16 +288,31 @@
                     if(userRole === 'admin') document.getElementById('btn-admin').classList.remove('hide');
                     if(userRole === 'editor' || userRole === 'admin') document.getElementById('btn-show-add').classList.remove('hide');
                 } else {
-                    // ป้องกันเคสบัญชีหลุดรอด ให้สร้างสิทธิ์ admin ชั่วคราวอัตโนมัติ
+                    // ถ้ายังไม่มีข้อมูลสิทธิ์ ให้ใส่สิทธิ์ชั่วคราวโดยไม่ต้องสั่งรีเฟรชหน้าเว็บซ้ำ
                     await supabaseClient.from('users_role').insert([{
                         user_id: currentUser.id,
                         role: 'admin',
                         username: currentUser.email ? currentUser.email.split('@')[0] : 'admin'
                     }]);
-                    window.location.reload();
+                    userRole = 'admin';
+                    document.getElementById('btn-admin').classList.remove('hide');
+                    document.getElementById('btn-show-add').classList.remove('hide');
                 }
+            } else {
+                currentUser = null;
+                userRole = null;
+                document.getElementById('btn-login').classList.remove('hide');
+                document.getElementById('btn-logout').classList.add('hide');
+                document.getElementById('btn-admin').classList.add('hide');
+                document.getElementById('btn-show-add').classList.add('hide');
             }
-            supabaseClient.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') window.location.reload(); });
+            
+            // ปิดการใช้ window.location.reload() ตรงนี้เพื่อป้องกันการรีเฟรชวนลูป
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+                    checkUserSession(); // แค่เรียกฟังก์ชันตรวจสอบสถานะใหม่โดยไม่ต้องรีเฟรชหน้าจอ
+                }
+            });
         }
 
         document.getElementById('btn-login').onclick = async () => {
