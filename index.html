@@ -599,14 +599,26 @@
             tbody.innerHTML = ''; adminSelect.innerHTML = '<option value="">-- เลือกเทอม --</option>';
             if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">ไม่มีข้อมูลเทอม</td></tr>';
 
+            let activeTermId = null;
+
             data.forEach(term => {
+                // หากเทอมนี้ active อยู่ ให้เก็บบันทึก ID ไว้เลือกเป็นค่าเริ่มต้น
+                if (term.is_active) activeTermId = term.id;
+
                 adminSelect.innerHTML += `<option value="${term.id}">เทอม ${term.semester}/${term.academic_year} ${term.is_active ? '(ปัจจุบัน)' : ''}</option>`;
                 const badge = term.is_active ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold"><i class="fas fa-check-circle mr-1"></i>ปัจจุบัน</span>` : `<span class="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg text-xs">อดีต</span>`;
                 const actionBtn = term.is_active ? '' : `<button onclick="setTermActive(${term.id})" class="text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium mr-2 transition">ตั้งเป็นปัจจุบัน</button>`;
 
                 tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-blue-50/40 transition"><td class="px-5 py-3 font-semibold">เทอม ${term.semester} / ${term.academic_year}</td><td class="px-5 py-3">${badge}</td><td class="px-5 py-3 text-right">${actionBtn}<button onclick="editTerm(${term.id}, ${term.semester}, ${term.academic_year})" class="text-slate-400 hover:text-blue-600 px-2 py-1"><i class="fas fa-pen"></i></button><button onclick="deleteTerm(${term.id})" class="text-red-400 hover:text-red-600 px-2 py-1 ml-1"><i class="fas fa-trash"></i></button></td></tr>`);
             });
-            if(data.length > 0) { adminSelect.value = data[0].id; loadAdminSubjects(); }
+
+            // บังคับเลือกเทอมปัจจุบันใน Dropdown เสมอ
+            if (activeTermId) {
+                adminSelect.value = activeTermId;
+            } else if (data.length > 0) {
+                adminSelect.value = data[0].id;
+            }
+            loadAdminSubjects();
         }
 
         async function setTermActive(termId) { await supabaseClient.from('terms').update({ is_active: false }).neq('id', 0); await supabaseClient.from('terms').update({ is_active: true }).eq('id', termId); Toast.fire({ icon: 'success', title: 'เปลี่ยนเทอมปัจจุบันแล้ว' }); fetchAllTerms(); fetchAssignments(); }
@@ -647,7 +659,7 @@
         }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        // 3. จัดการบัญชีผู้ใช้ (ยังคงอยู่หน้า Admin, ไม่เปลี่ยนหน้า, รีเฟรชตาราง)
+        // 3. จัดการบัญชีผู้ใช้
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้างบัญชี...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
@@ -733,12 +745,10 @@
             if (formValues) {
                 Swal.fire({title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
                 
-                // อัปเดตรหัสผ่านใน Auth (ถ้ามีการกรอกรหัสผ่านใหม่)
                 if (formValues.password && formValues.password.length >= 6) {
                     await supabaseClient.auth.admin.updateUserById(uid, { password: formValues.password }).catch(() => {});
                 }
 
-                // อัปเดตตาราง users_role
                 await supabaseClient.from('users_role').update({ username: formValues.username, role: formValues.role }).eq('user_id', uid);
                 
                 Toast.fire({ icon: 'success', title: 'อัปเดตบัญชีสำเร็จ' });
