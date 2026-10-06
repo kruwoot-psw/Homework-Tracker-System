@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการภาระงาน (Homework Tracker)</title>
+    
+    <!-- CSS / Frameworks -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
+        .hide { display: none !important; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-indigo-600 shadow-lg text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-book-open text-2xl mr-3"></i>
+                    <span class="font-bold text-xl tracking-wide">HW Tracker System</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="btn-show-add" class="hide bg-green-500 hover:bg-green-600 px-4 py-2 rounded-md font-medium text-sm transition">
+                        <i class="fas fa-plus mr-1"></i> สั่งงานใหม่
+                    </button>
+                    <button id="btn-login" class="bg-white text-indigo-600 hover:bg-gray-100 px-4 py-2 rounded-md font-medium text-sm transition">
+                        <i class="fas fa-sign-in-alt mr-1"></i> เข้าสู่ระบบ
+                    </button>
+                    <button id="btn-logout" class="hide bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md font-medium text-sm transition">
+                        <i class="fas fa-sign-out-alt mr-1"></i> ออกจากระบบ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Public View: แสดงภาระงาน -->
+        <div id="view-public" class="">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-tasks text-indigo-500 mr-2"></i> ภาระงานทั้งหมด</h1>
+                <div class="flex items-center space-x-2">
+                    <label class="font-medium text-sm text-gray-600">จัดเรียง:</label>
+                    <select id="sort-select" class="border rounded-md px-3 py-1.5 bg-white text-sm focus:ring-indigo-500">
+                        <option value="end_date_asc">ส่งเร็วสุดขึ้นก่อน</option>
+                        <option value="start_date_desc">งานที่สั่งล่าสุด</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Loader -->
+            <div id="loading-tasks" class="text-center py-12">
+                <i class="fas fa-spinner fa-spin text-4xl text-indigo-500"></i>
+                <p class="mt-4 text-gray-500">กำลังโหลดข้อมูลภาระงาน...</p>
+            </div>
+
+            <!-- Grid ภาระงาน -->
+            <div id="tasks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- ข้อมูลจะถูกแทรกที่นี่โดย JavaScript -->
+            </div>
+        </div>
+
+        <!-- Editor View: ฟอร์มเพิ่มภาระงาน (ซ่อนอยู่) -->
+        <div id="view-editor" class="hide max-w-3xl mx-auto">
+            <div class="bg-white rounded-xl shadow-md p-6 sm:p-8">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 class="text-2xl font-bold text-gray-800">📝 เพิ่มภาระงานใหม่</h2>
+                    <button id="btn-cancel-add" class="text-gray-500 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                
+                <form id="form-assignment" class="space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">เทอมการศึกษา</label>
+                            <select id="f-term" required class="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-50"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">รหัสวิชา</label>
+                            <select id="f-subject" required class="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-50" disabled>
+                                <option value="">-- กรุณาเลือกเทอมก่อน --</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-md border border-blue-100">
+                        <p class="text-sm text-blue-800"><span class="font-bold">วิชา:</span> <span id="display-subj-name">-</span></p>
+                        <p class="text-sm text-blue-800"><span class="font-bold">ครูผู้สอน:</span> <span id="display-teacher">-</span></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                        <div class="sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ลำดับงานที่</label>
+                            <input type="number" id="f-order" min="1" required class="w-full border border-gray-300 rounded-md px-4 py-2">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">รูปแบบงาน</label>
+                            <select id="f-type" required class="w-full border border-gray-300 rounded-md px-4 py-2">
+                                <option value="งานเดี่ยว">งานเดี่ยว</option>
+                                <option value="งานกลุ่ม">งานกลุ่ม</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">หัวข้องาน</label>
+                        <input type="text" id="f-topic" required placeholder="เช่น รายงานเรื่องดาราศาสตร์" class="w-full border border-gray-300 rounded-md px-4 py-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดงาน</label>
+                        <textarea id="f-details" rows="3" class="w-full border border-gray-300 rounded-md px-4 py-2"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">วันที่เริ่มสั่งงาน</label>
+                            <input type="datetime-local" id="f-start" required class="w-full border border-gray-300 rounded-md px-4 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">วัน/เวลา ที่กำหนดส่ง</label>
+                            <input type="datetime-local" id="f-end" required class="w-full border border-gray-300 rounded-md px-4 py-2">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ลิงก์ข้อมูลเพิ่มเติม (ถ้ามี)</label>
+                        <input type="url" id="f-links" placeholder="https://" class="w-full border border-gray-300 rounded-md px-4 py-2">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ (ถ้ามี)</label>
+                        <input type="text" id="f-remarks" class="w-full border border-gray-300 rounded-md px-4 py-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">อัปโหลดรูปภาพ (หลายรูปได้)</label>
+                        <input type="file" id="f-images" multiple accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" id="btn-submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md shadow transition">
+                            <i class="fas fa-save mr-2"></i> บันทึกและส่งแจ้งเตือน Telegram
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t py-6 text-center text-gray-500 text-sm mt-auto">
+        <p>ระบบแจ้งเตือนการบ้านออนไลน์ © 2026</p>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC -->
+    <!-- ========================================== -->
+    <script>
+        // --- [ ส่วนที่ต้องตั้งค่า (Config) ] ---
+        const SUPABASE_URL = 'https://evizikofpasozwermgja.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2aXppa29mcGFzb3p3ZXJtZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNzY1NDAsImV4cCI6MjEwNjg1MjU0MH0.2We6heZkEdzb2XClN6rbjhaOrRy9xyTGAr_GmVPZcOY';
+        const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw0f_Nd6T2IX38JLLyCviq4MklmBodQfgacdSeucdYZZhj90GaUdpL3ndKfKj4CYfGn/exec';
+        
+        // กำหนด URL ของหน้าเว็บนี้เพื่อแนบไปใน Telegram
+        const CURRENT_WEB_URL = window.location.href.split('?')[0];
+
+        // ----------------------------------------
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentUser = null;
+        let subjectsData = [];
+        let globalAssignments = []; // เก็บ cache สำหรับ sort
+
+        // UI Elements
+        const viewPublic = document.getElementById('view-public');
+        const viewEditor = document.getElementById('view-editor');
+        const btnLogin = document.getElementById('btn-login');
+        const btnLogout = document.getElementById('btn-logout');
+        const btnShowAdd = document.getElementById('btn-show-add');
+        const btnCancelAdd = document.getElementById('btn-cancel-add');
+        const tasksContainer = document.getElementById('tasks-container');
+
+        // เริ่มต้นการทำงาน
+        window.onload = async () => {
+            checkUserSession();
+            await fetchAssignments();
+            setInterval(updateCountdowns, 60000); // อัปเดตเวลาทุก 1 นาที
+        };
+
+        // --- ระบบ Authentication ---
+        async function checkUserSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                btnLogin.classList.add('hide');
+                btnLogout.classList.remove('hide');
+                btnShowAdd.classList.remove('hide');
+            }
+            
+            // ตรวจจับการเปลี่ยนแปลง Auth (Login/Logout)
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN') {
+                    window.location.reload();
+                } else if (event === 'SIGNED_OUT') {
+                    window.location.reload();
+                }
+            });
+        }
+
+        btnLogin.onclick = async () => {
+            const { value: formValues } = await Swal.fire({
+                title: 'เข้าสู่ระบบ (สำหรับครู/แอดมิน)',
+                html:
+                    '<input id="swal-email" type="email" class="swal2-input" placeholder="อีเมล">' +
+                    '<input id="swal-password" type="password" class="swal2-input" placeholder="รหัสผ่าน">',
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'เข้าสู่ระบบ',
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    return {
+                        email: document.getElementById('swal-email').value,
+                        password: document.getElementById('swal-password').value
+                    }
+                }
+            });
+
+            if (formValues) {
+                Swal.fire({title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: formValues.email,
+                    password: formValues.password,
+                });
+                if (error) {
+                    Swal.fire('ผิดพลาด', error.message, 'error');
+                } else {
+                    Swal.fire('สำเร็จ', 'เข้าสู่ระบบเรียบร้อย', 'success');
+                }
+            }
+        };
+
+        btnLogout.onclick = async () => {
+            await supabase.auth.signOut();
+        };
+
+        // --- ระบบดึงข้อมูล (Public View) ---
+        async function fetchAssignments() {
+            document.getElementById('loading-tasks').classList.remove('hide');
+            tasksContainer.innerHTML = '';
+
+            // ดึงข้อมูล Join Table
+            const { data, error } = await supabase
+                .from('assignments')
+                .select(`
+                    *,
+                    subjects ( subject_code, subject_name, teacher_name, terms ( academic_year, semester, is_active ) )
+                `);
+
+            document.getElementById('loading-tasks').classList.add('hide');
+
+            if (error) {
+                console.error(error);
+                tasksContainer.innerHTML = `<p class="text-red-500 text-center col-span-full">ดึงข้อมูลล้มเหลว</p>`;
+                return;
+            }
+
+            // กรองเอาเฉพาะเทอมปัจจุบัน (is_active = true)
+            globalAssignments = data.filter(item => item.subjects.terms.is_active);
+            renderAssignments();
+        }
+
+        // จัดเรียง
+        document.getElementById('sort-select').onchange = renderAssignments;
+
+        function renderAssignments() {
+            const sortMode = document.getElementById('sort-select').value;
+            let sortedData = [...globalAssignments];
+
+            if (sortMode === 'end_date_asc') {
+                sortedData.sort((a, b) => new Date(a.end_date) - new Date(b.end_date));
+            } else {
+                sortedData.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+            }
+
+            tasksContainer.innerHTML = '';
+            if (sortedData.length === 0) {
+                tasksContainer.innerHTML = `<p class="text-gray-500 text-center col-span-full py-10">ไม่มีภาระงานในขณะนี้</p>`;
+                return;
+            }
+
+            sortedData.forEach(task => {
+                const subj = task.subjects;
+                const images = task.images_data || [];
+                const imgThumb = images.length > 0 ? `<img src="${images[0].lh_url}" class="w-full h-32 object-cover rounded-md mb-3 cursor-pointer" onclick="window.open('${images[0].lh_url}')" alt="งาน">` : '';
+                
+                // ปุ่มลบงาน (แสดงเฉพาะถ้า Logged In)
+                const deleteBtn = currentUser ? 
+                    `<button onclick="deleteAssignment(${task.id}, '${escapeQuote(JSON.stringify(images))}')" class="absolute top-2 right-2 bg-red-100 hover:bg-red-500 hover:text-white text-red-500 w-8 h-8 rounded-full flex items-center justify-center transition shadow-sm"><i class="fas fa-trash"></i></button>` : '';
+
+                const cardHtml = `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 relative hover:shadow-md transition">
+                        ${deleteBtn}
+                        <div class="mb-2">
+                            <span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded font-bold">${subj.subject_code}</span>
+                            <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">${task.work_type}</span>
+                            <span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">ชิ้นที่ ${task.order_num}</span>
+                        </div>
+                        <h3 class="font-bold text-lg text-gray-900 mb-1">${task.topic}</h3>
+                        <p class="text-sm text-gray-500 mb-3"><i class="fas fa-user-tie mr-1"></i>${subj.teacher_name}</p>
+                        ${imgThumb}
+                        <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-md mb-4 h-20 overflow-y-auto">
+                            ${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}
+                        </div>
+                        
+                        <div class="border-t pt-3 mt-auto">
+                            <div class="flex justify-between items-center text-sm mb-1">
+                                <span class="text-gray-500"><i class="far fa-calendar-alt"></i> กำหนดส่ง:</span>
+                                <span class="font-medium">${new Date(task.end_date).toLocaleDateString('th-TH')} ${new Date(task.end_date).toLocaleTimeString('th-TH').slice(0,5)}</span>
+                            </div>
+                            <div class="text-center mt-3 p-2 rounded-lg bg-gray-900 text-white font-mono text-sm shadow-inner timer-container" data-end="${task.end_date}">
+                                <i class="fas fa-hourglass-half mr-1"></i> <span class="countdown-text">กำลังคำนวณ...</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                tasksContainer.insertAdjacentHTML('beforeend', cardHtml);
+            });
+            updateCountdowns();
+        }
+
+        // ฟังก์ชันหนีเครื่องหมาย quote ป้องกัน error ตอนส่ง JSON เข้า onclick
+        function escapeQuote(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function updateCountdowns() {
+            document.querySelectorAll('.timer-container').forEach(el => {
+                const end = new Date(el.dataset.end).getTime();
+                const now = new Date().getTime();
+                const distance = end - now;
+                const textEl = el.querySelector('.countdown-text');
+
+                if (distance < 0) {
+                    textEl.innerHTML = "หมดเวลาส่งงานแล้ว";
+                    el.classList.replace('bg-gray-900', 'bg-red-600');
+                    el.classList.add('animate-pulse');
+                } else {
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const mins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    textEl.innerHTML = `เหลือ ${days} วัน ${hours} ชม. ${mins} นาที`;
+                    
+                    // แจ้งเตือนสีแดงถ้าเหลือน้อยกว่า 2 วัน
+                    if (days < 2) {
+                        el.classList.replace('bg-gray-900', 'bg-red-500');
+                    } else {
+                        el.classList.replace('bg-red-500', 'bg-gray-900');
+                        el.classList.replace('bg-red-600', 'bg-gray-900');
+                        el.classList.remove('animate-pulse');
+                    }
+                }
+            });
+        }
+
+        // --- ระบบ Editor (เพิ่มภาระงาน) ---
+        btnShowAdd.onclick = async () => {
+            viewPublic.classList.add('hide');
+            viewEditor.classList.remove('hide');
+            await loadTermsDropdown();
+            // set default dates
+            const now = new Date();
+            document.getElementById('f-start').value = now.toISOString().slice(0,16);
+            now.setDate(now.getDate() + 7); // Default อีก 7 วัน
+            document.getElementById('f-end').value = now.toISOString().slice(0,16);
+        };
+
+        btnCancelAdd.onclick = () => {
+            viewEditor.classList.add('hide');
+            viewPublic.classList.remove('hide');
+            document.getElementById('form-assignment').reset();
+        };
+
+        async function loadTermsDropdown() {
+            const { data, error } = await supabase.from('terms').select('*').eq('is_active', true);
+            const selectTerm = document.getElementById('f-term');
+            selectTerm.innerHTML = '<option value="">-- เลือกเทอม --</option>';
+            if(data) {
+                data.forEach(t => {
+                    selectTerm.innerHTML += `<option value="${t.id}">${t.semester}/${t.academic_year}</option>`;
+                });
+            }
+        }
+
+        document.getElementById('f-term').onchange = async (e) => {
+            const termId = e.target.value;
+            const selectSubj = document.getElementById('f-subject');
+            if(!termId) {
+                selectSubj.innerHTML = '<option value="">-- กรุณาเลือกเทอมก่อน --</option>';
+                selectSubj.disabled = true;
+                return;
+            }
+            
+            const { data, error } = await supabase.from('subjects').select('*').eq('term_id', termId);
+            subjectsData = data || [];
+            selectSubj.innerHTML = '<option value="">-- เลือกรหัสวิชา --</option>';
+            subjectsData.forEach(s => {
+                selectSubj.innerHTML += `<option value="${s.id}">${s.subject_code}</option>`;
+            });
+            selectSubj.disabled = false;
+        };
+
+        document.getElementById('f-subject').onchange = (e) => {
+            const subjId = e.target.value;
+            const subj = subjectsData.find(s => s.id == subjId);
+            if (subj) {
+                document.getElementById('display-subj-name').innerText = subj.subject_name;
+                document.getElementById('display-teacher').innerText = subj.teacher_name;
+            } else {
+                document.getElementById('display-subj-name').innerText = '-';
+                document.getElementById('display-teacher').innerText = '-';
+            }
+        };
+
+        // แปลงไฟล์เป็น Base64
+        const getBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve({ name: file.name, mimeType: file.type, base64: reader.result.split(',')[1] });
+            reader.onerror = error => reject(error);
+        });
+
+        // Submit Form
+        document.getElementById('form-assignment').onsubmit = async (e) => {
+            e.preventDefault();
+            const btnSubmit = document.getElementById('btn-submit');
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังอัปโหลดและบันทึกข้อมูล...';
+
+            try {
+                // 1. จัดการรูปภาพ (ส่งไป GAS)
+                const fileInput = document.getElementById('f-images');
+                let imagesDataToSave = [];
+                
+                if (fileInput.files.length > 0) {
+                    const filesPromises = Array.from(fileInput.files).map(f => getBase64(f));
+                    const base64Files = await Promise.all(filesPromises);
+
+                    const formData = new URLSearchParams();
+                    formData.append("action", "upload");
+                    formData.append("files", JSON.stringify(base64Files));
+
+                    const uploadRes = await fetch(GAS_WEBAPP_URL, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    });
+                    const result = await uploadRes.json();
+                    if (result.status === 'success') {
+                        imagesDataToSave = result.data; // [{file_id, lh_url}]
+                    } else {
+                        throw new Error('อัปโหลดรูปภาพไม่สำเร็จ');
+                    }
+                }
+
+                // 2. บันทึกลง Supabase
+                const newAssignment = {
+                    subject_id: document.getElementById('f-subject').value,
+                    order_num: document.getElementById('f-order').value,
+                    work_type: document.getElementById('f-type').value,
+                    topic: document.getElementById('f-topic').value,
+                    details: document.getElementById('f-details').value,
+                    start_date: document.getElementById('f-start').value,
+                    end_date: document.getElementById('f-end').value,
+                    links: document.getElementById('f-links').value,
+                    remarks: document.getElementById('f-remarks').value,
+                    images_data: imagesDataToSave
+                };
+
+                const { data: insertedData, error: insertError } = await supabase
+                    .from('assignments')
+                    .insert([newAssignment])
+                    .select();
+
+                if (insertError) throw insertError;
+
+                // 3. เตรียมข้อมูลส่ง Telegram ผ่าน GAS (action=notify)
+                const subj = subjectsData.find(s => s.id == newAssignment.subject_id);
+                
+                // คำนวณเวลาที่เหลือสำหรับข้อความ Telegram
+                const endT = new Date(newAssignment.end_date).getTime();
+                const nowT = new Date().getTime();
+                let remainTxt = "หมดเวลาแล้ว";
+                if(endT > nowT) {
+                    const d = Math.floor((endT - nowT) / (1000 * 60 * 60 * 24));
+                    remainTxt = `${d} วัน`;
+                }
+
+                const notifyPayload = {
+                    startDateStr: new Date(newAssignment.start_date).toLocaleDateString('th-TH'),
+                    endDateStr: `${new Date(newAssignment.end_date).toLocaleDateString('th-TH')} ${new Date(newAssignment.end_date).toLocaleTimeString('th-TH').slice(0,5)} น.`,
+                    orderNum: newAssignment.order_num,
+                    subjectCode: subj.subject_code,
+                    subjectName: subj.subject_name,
+                    teacherName: subj.teacher_name,
+                    topic: newAssignment.topic,
+                    details: newAssignment.details,
+                    workType: newAssignment.work_type,
+                    links: newAssignment.links,
+                    remarks: newAssignment.remarks,
+                    images: imagesDataToSave,
+                    remainingText: remainTxt,
+                    webUrl: CURRENT_WEB_URL
+                };
+
+                const notifyForm = new URLSearchParams();
+                notifyForm.append("action", "notify");
+                notifyForm.append("payload", JSON.stringify(notifyPayload));
+                
+                // ส่ง Notify แบบไม่รอ Await เพื่อให้เว็บตอบสนองไวขึ้น
+                fetch(GAS_WEBAPP_URL, {
+                    method: 'POST',
+                    body: notifyForm,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+
+                Swal.fire('สำเร็จ!', 'เพิ่มภาระงานและส่งแจ้งเตือนเรียบร้อย', 'success').then(() => {
+                    btnCancelAdd.click();
+                    fetchAssignments();
+                });
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire('เกิดข้อผิดพลาด', error.message, 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="fas fa-save mr-2"></i> บันทึกและส่งแจ้งเตือน Telegram';
+            }
+        };
+
+        // --- ระบบลบงาน (พ่วงลบรูปใน Drive) ---
+        async function deleteAssignment(id, imagesDataStr) {
+            const result = await Swal.fire({
+                title: 'ยืนยันการลบ?',
+                text: "หากลบแล้วข้อมูลและรูปภาพในระบบจะหายไปถาวร",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'ใช่, ลบเลย!'
+            });
+
+            if (result.isConfirmed) {
+                Swal.fire({title: 'กำลังลบข้อมูล...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+                
+                try {
+                    // 1. แปลง string กลับเป็น Array
+                    // แก้ไข string ที่หลบอักขระไว้
+                    const parsedStr = imagesDataStr.replace(/&quot;/g, '"');
+                    const images = JSON.parse(parsedStr);
+
+                    // 2. ลบรูปใน Drive ผ่าน GAS
+                    if (images && images.length > 0) {
+                        for (let img of images) {
+                            const df = new URLSearchParams();
+                            df.append("action", "delete");
+                            df.append("file_id", img.file_id);
+                            await fetch(GAS_WEBAPP_URL, { method: 'POST', body: df, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+                        }
+                    }
+
+                    // 3. ลบข้อมูลจาก Supabase
+                    const { error } = await supabase.from('assignments').delete().eq('id', id);
+                    if (error) throw error;
+
+                    Swal.fire('ลบแล้ว!', 'ข้อมูลถูกลบออกจากระบบเรียบร้อย', 'success');
+                    fetchAssignments();
+
+                } catch (error) {
+                    console.error(error);
+                    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถลบข้อมูลได้', 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
