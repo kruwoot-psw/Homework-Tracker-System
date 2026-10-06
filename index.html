@@ -50,8 +50,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-2">
-                    <!-- โลโก้แบบไอคอน (หรือสามารถใส่ลิงก์รูปภาพ Drive ได้ตามเดิม) -->
-                    <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-10 w-auto object-contain drop-shadow-sm rounded-md"">
+                    <!-- โลโก้รูปภาพจาก Drive (แก้ไขเครื่องหมายคำพูดเกินเรียบร้อย) -->
+                    <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-10 w-auto object-contain drop-shadow-sm rounded-md">
                     <span class="font-semibold text-lg tracking-wide text-blue-900">HW Tracker</span>
                 </div>
                 <div class="flex items-center space-x-3 text-sm">
@@ -288,10 +288,10 @@
                     if(userRole === 'admin') document.getElementById('btn-admin').classList.remove('hide');
                     if(userRole === 'editor' || userRole === 'admin') document.getElementById('btn-show-add').classList.remove('hide');
                 } else {
-                    // หากยังไม่มีข้อมูลสิทธิ์ในตาราง users_role (ป้องกันเคสบัญชีค้าง)
+                    // ป้องกันเคสบัญชีหลุดรอด ให้สร้างสิทธิ์ admin ชั่วคราวอัตโนมัติ
                     await supabaseClient.from('users_role').insert([{
                         user_id: currentUser.id,
-                        role: 'admin', // ให้สิทธิ์ชั่วคราวเพื่อให้รอดผ่านหน้าแรก
+                        role: 'admin',
                         username: currentUser.email ? currentUser.email.split('@')[0] : 'admin'
                     }]);
                     window.location.reload();
@@ -553,7 +553,7 @@
         async function editSubject(id, code, name, teacher) { const { value: form } = await Swal.fire({ title: 'แก้ไขรายวิชา', html: `<input id="e-sub-code" class="swal2-input text-sm" value="${code}"><input id="e-sub-name" class="swal2-input text-sm" value="${name}"><input id="e-sub-teacher" class="swal2-input text-sm" value="${teacher}">`, preConfirm: () => ({ code: document.getElementById('e-sub-code').value, name: document.getElementById('e-sub-name').value, teacher: document.getElementById('e-sub-teacher').value }) }); if(form) { await supabaseClient.from('subjects').update({ subject_code: form.code, subject_name: form.name, teacher_name: form.teacher }).eq('id', id); loadAdminSubjects(); } }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        // 3. จัดการบัญชีผู้ใช้ (ระบบสร้างบัญชีอัตโนมัติ พร้อมบันทึกลงตาราง users_role ทันที)
+        // 3. จัดการบัญชีผู้ใช้
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้างบัญชี...', didOpen: () => Swal.showLoading()});
@@ -564,7 +564,10 @@
             
             // 1. สร้างบัญชีใน Supabase Auth
             const { data, error } = await supabaseClient.auth.signUp({ email: user + DOMAIN_SUFFIX, password: pass });
-            if(error) { Toast.fire({ icon: 'error', title: 'Username ซ้ำหรือสร้างไม่ได้' }); return; }
+            if(error) { 
+                Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); 
+                return; 
+            }
             
             if (data.user) {
                 // 2. บันทึกสิทธิ์ลงตาราง users_role ทันทีโดยผูกกับ UID ที่เพิ่งสร้าง
