@@ -659,19 +659,27 @@
         }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        // 3. จัดการบัญชีผู้ใช้
+// 3. จัดการบัญชีผู้ใช้ (แก้ไขไม่ให้เปลี่ยนหน้าเว็บไปเป็น User ที่เพิ่งสร้าง)
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้างบัญชี...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            
+            // 1. บันทึก Session ของ Admin ปัจจุบันไว้ก่อน
+            const { data: { session: adminSession } } = await supabaseClient.auth.getSession();
             
             const user = document.getElementById('f-add-user').value.toLowerCase();
             const pass = document.getElementById('f-add-pass').value;
             const role = document.getElementById('f-add-role').value;
             
+            // 2. สร้างบัญชีใหม่
             const { data, error } = await supabaseClient.auth.signUp({ email: user + DOMAIN_SUFFIX, password: pass });
-            if(error) { Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); return; }
+            if(error) { 
+                Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); 
+                return; 
+            }
             
             if (data.user) {
+                // 3. บันทึกสิทธิ์ลงตาราง users_role
                 const { error: roleError } = await supabaseClient.from('users_role').insert([{
                     user_id: data.user.id,
                     role: role,
@@ -684,9 +692,17 @@
                 }
             }
             
+            // 4. บังคับรีเซ็ตเซสชันกลับมาเป็นของ Admin ทันที เพื่อป้องกันหน้าเว็บเปลี่ยนสิทธิ์
+            if (adminSession) {
+                await supabaseClient.auth.setSession({
+                    access_token: adminSession.access_token,
+                    refresh_token: adminSession.refresh_token
+                });
+            }
+            
             Swal.fire({ icon: 'success', title: 'สร้างบัญชีสำเร็จ', text: `สร้างบัญชีผู้ใช้ "${user}" เรียบร้อยแล้ว`, timer: 2000, showConfirmButton: false });
             e.target.reset(); 
-            fetchAppUsers();
+            fetchAppUsers(); // รีเฟรชตารางข้อมูลในหน้า Admin เหมือนเดิม
         };
 
         async function fetchAppUsers() {
