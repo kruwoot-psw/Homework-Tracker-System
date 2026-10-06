@@ -265,7 +265,7 @@
     </main>
 
     <footer class="text-center py-6 text-blue-500 text-sm mt-auto border-t border-blue-50">
-        HW Tracker © 2026 | ระบบจัดการภาระงานโรงเรียน
+        HW Tracker © 2026 | ระบบจัดการภาระงาน Homework-Tracker
     </footer>
 
     <script>
@@ -602,9 +602,7 @@
             let activeTermId = null;
 
             data.forEach(term => {
-                // หากเทอมนี้ active อยู่ ให้เก็บบันทึก ID ไว้เลือกเป็นค่าเริ่มต้น
                 if (term.is_active) activeTermId = term.id;
-
                 adminSelect.innerHTML += `<option value="${term.id}">เทอม ${term.semester}/${term.academic_year} ${term.is_active ? '(ปัจจุบัน)' : ''}</option>`;
                 const badge = term.is_active ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold"><i class="fas fa-check-circle mr-1"></i>ปัจจุบัน</span>` : `<span class="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg text-xs">อดีต</span>`;
                 const actionBtn = term.is_active ? '' : `<button onclick="setTermActive(${term.id})" class="text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium mr-2 transition">ตั้งเป็นปัจจุบัน</button>`;
@@ -612,12 +610,7 @@
                 tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-blue-50/40 transition"><td class="px-5 py-3 font-semibold">เทอม ${term.semester} / ${term.academic_year}</td><td class="px-5 py-3">${badge}</td><td class="px-5 py-3 text-right">${actionBtn}<button onclick="editTerm(${term.id}, ${term.semester}, ${term.academic_year})" class="text-slate-400 hover:text-blue-600 px-2 py-1"><i class="fas fa-pen"></i></button><button onclick="deleteTerm(${term.id})" class="text-red-400 hover:text-red-600 px-2 py-1 ml-1"><i class="fas fa-trash"></i></button></td></tr>`);
             });
 
-            // บังคับเลือกเทอมปัจจุบันใน Dropdown เสมอ
-            if (activeTermId) {
-                adminSelect.value = activeTermId;
-            } else if (data.length > 0) {
-                adminSelect.value = data[0].id;
-            }
+            if (activeTermId) adminSelect.value = activeTermId;
             loadAdminSubjects();
         }
 
@@ -659,50 +652,30 @@
         }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-// 3. จัดการบัญชีผู้ใช้ (แก้ไขไม่ให้เปลี่ยนหน้าเว็บไปเป็น User ที่เพิ่งสร้าง)
+        // 3. จัดการบัญชีผู้ใช้
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้างบัญชี...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
             
-            // 1. บันทึก Session ของ Admin ปัจจุบันไว้ก่อน
             const { data: { session: adminSession } } = await supabaseClient.auth.getSession();
-            
             const user = document.getElementById('f-add-user').value.toLowerCase();
             const pass = document.getElementById('f-add-pass').value;
             const role = document.getElementById('f-add-role').value;
             
-            // 2. สร้างบัญชีใหม่
             const { data, error } = await supabaseClient.auth.signUp({ email: user + DOMAIN_SUFFIX, password: pass });
-            if(error) { 
-                Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); 
-                return; 
-            }
+            if(error) { Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); return; }
             
             if (data.user) {
-                // 3. บันทึกสิทธิ์ลงตาราง users_role
-                const { error: roleError } = await supabaseClient.from('users_role').insert([{
-                    user_id: data.user.id,
-                    role: role,
-                    username: user
-                }]);
-
-                if (roleError) {
-                    Swal.fire('คำเตือน', 'สร้างบัญชี Auth สำเร็จ แต่บันทึกสิทธิ์ลงตารางไม่สำเร็จ: ' + roleError.message, 'warning');
-                    return;
-                }
+                await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: role, username: user }]);
             }
             
-            // 4. บังคับรีเซ็ตเซสชันกลับมาเป็นของ Admin ทันที เพื่อป้องกันหน้าเว็บเปลี่ยนสิทธิ์
             if (adminSession) {
-                await supabaseClient.auth.setSession({
-                    access_token: adminSession.access_token,
-                    refresh_token: adminSession.refresh_token
-                });
+                await supabaseClient.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token });
             }
             
             Swal.fire({ icon: 'success', title: 'สร้างบัญชีสำเร็จ', text: `สร้างบัญชีผู้ใช้ "${user}" เรียบร้อยแล้ว`, timer: 2000, showConfirmButton: false });
             e.target.reset(); 
-            fetchAppUsers(); // รีเฟรชตารางข้อมูลในหน้า Admin เหมือนเดิม
+            fetchAppUsers();
         };
 
         async function fetchAppUsers() {
@@ -740,13 +713,14 @@
                 html: `
                     <div class="text-left space-y-3 mt-3">
                         <div><label class="text-sm font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full lowercase" value="${currentName}"></div>
-                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">รหัสผ่านใหม่ (กรอกหากต้องการเปลี่ยน)</label><input type="password" id="eu-pass" class="w-full" placeholder="ปล่อยว่างไว้ถ้าไม่เปลี่ยน"></div>
+                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">รหัสผ่านใหม่ (กรอกหากต้องการเปลี่ยน)</label><input type="text" id="eu-pass" class="w-full" placeholder="กรอกรหัสผ่านใหม่ที่ต้องการเปลี่ยน"></div>
                         <div><label class="text-sm font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label>
                             <select id="eu-role" class="w-full">
                                 <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option>
                                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option>
                             </select>
                         </div>
+                        <p class="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg"><i class="fas fa-info-circle"></i> หมายเหตุ: การเปลี่ยนรหัสผ่านผ่านหน้าเว็บ อาจต้องอาศัยสิทธิ์ผู้ดูแลระบบสูงสุด (Service Role) ใน Supabase หากติดปัญหา แนะนำให้ไปเปลี่ยนที่เมนู Supabase > Authentication > Users โดยตรง</p>
                     </div>
                 `,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
