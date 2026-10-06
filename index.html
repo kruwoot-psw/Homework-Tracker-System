@@ -181,7 +181,8 @@
         const CURRENT_WEB_URL = window.location.href.split('?')[0];
 
         // ----------------------------------------
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // เปลี่ยนชื่อตัวแปรเป็น supabaseClient ป้องกันการชนกับตัวแปรที่มาจาก CDN
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null;
         let subjectsData = [];
         let globalAssignments = []; // เก็บ cache สำหรับ sort
@@ -204,7 +205,7 @@
 
         // --- ระบบ Authentication ---
         async function checkUserSession() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 currentUser = session.user;
                 btnLogin.classList.add('hide');
@@ -213,7 +214,7 @@
             }
             
             // ตรวจจับการเปลี่ยนแปลง Auth (Login/Logout)
-            supabase.auth.onAuthStateChange((event, session) => {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN') {
                     window.location.reload();
                 } else if (event === 'SIGNED_OUT') {
@@ -242,7 +243,7 @@
 
             if (formValues) {
                 Swal.fire({title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
-                const { data, error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: formValues.email,
                     password: formValues.password,
                 });
@@ -255,7 +256,7 @@
         };
 
         btnLogout.onclick = async () => {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
         };
 
         // --- ระบบดึงข้อมูล (Public View) ---
@@ -264,7 +265,7 @@
             tasksContainer.innerHTML = '';
 
             // ดึงข้อมูล Join Table
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('assignments')
                 .select(`
                     *,
@@ -280,7 +281,7 @@
             }
 
             // กรองเอาเฉพาะเทอมปัจจุบัน (is_active = true)
-            globalAssignments = data.filter(item => item.subjects.terms.is_active);
+            globalAssignments = data.filter(item => item.subjects && item.subjects.terms && item.subjects.terms.is_active);
             renderAssignments();
         }
 
@@ -397,7 +398,7 @@
         };
 
         async function loadTermsDropdown() {
-            const { data, error } = await supabase.from('terms').select('*').eq('is_active', true);
+            const { data, error } = await supabaseClient.from('terms').select('*').eq('is_active', true);
             const selectTerm = document.getElementById('f-term');
             selectTerm.innerHTML = '<option value="">-- เลือกเทอม --</option>';
             if(data) {
@@ -416,7 +417,7 @@
                 return;
             }
             
-            const { data, error } = await supabase.from('subjects').select('*').eq('term_id', termId);
+            const { data, error } = await supabaseClient.from('subjects').select('*').eq('term_id', termId);
             subjectsData = data || [];
             selectSubj.innerHTML = '<option value="">-- เลือกรหัสวิชา --</option>';
             subjectsData.forEach(s => {
@@ -492,7 +493,7 @@
                     images_data: imagesDataToSave
                 };
 
-                const { data: insertedData, error: insertError } = await supabase
+                const { data: insertedData, error: insertError } = await supabaseClient
                     .from('assignments')
                     .insert([newAssignment])
                     .select();
@@ -585,7 +586,7 @@
                     }
 
                     // 3. ลบข้อมูลจาก Supabase
-                    const { error } = await supabase.from('assignments').delete().eq('id', id);
+                    const { error } = await supabaseClient.from('assignments').delete().eq('id', id);
                     if (error) throw error;
 
                     Swal.fire('ลบแล้ว!', 'ข้อมูลถูกลบออกจากระบบเรียบร้อย', 'success');
