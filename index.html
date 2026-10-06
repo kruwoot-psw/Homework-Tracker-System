@@ -254,7 +254,7 @@
             });
         }
 
-        // Login ด้วย Username
+// Login ด้วย Username (ปรับแก้ให้โชว์ Error จริงจาก Supabase)
         document.getElementById('btn-login').onclick = async () => {
             const { value: formValues } = await Swal.fire({
                 title: 'เข้าสู่ระบบ',
@@ -283,7 +283,12 @@
                 });
                 
                 if (error) {
-                    Toast.fire({ icon: 'error', title: 'Username หรือรหัสผ่านไม่ถูกต้อง' });
+                    // โชว์ Error จริงๆ จากระบบ
+                    Swal.fire({ 
+                        icon: 'error', 
+                        title: 'เข้าสู่ระบบไม่ได้', 
+                        text: 'สาเหตุ: ' + error.message 
+                    });
                 } else {
                     Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
                 }
