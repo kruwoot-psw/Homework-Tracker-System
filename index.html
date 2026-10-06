@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการภาระงาน (Minimal Tracker)</title>
+    <title>ระบบจัดการภาระงาน (Homework Tracker)</title>
     
     <!-- CSS / Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,38 +17,47 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
-        body { font-family: 'Prompt', sans-serif; background-color: #fafafa; color: #333; }
+        
+        /* เปลี่ยนสีพื้นหลังเป็นโทนฟ้าอ่อน */
+        body { font-family: 'Prompt', sans-serif; background-color: #f0f9ff; color: #1e293b; }
         .hide { display: none !important; }
         
-        /* Minimalist tweaks */
+        /* สไตล์ฟอร์มแบบมินิมอล โทนฟ้า */
         input, select, textarea { 
-            border: 1px solid #e5e7eb !important; 
-            border-radius: 6px !important;
+            border: 1px solid #cbd5e1 !important; 
+            border-radius: 8px !important;
             box-shadow: none !important;
             transition: all 0.2s;
         }
         input:focus, select:focus, textarea:focus {
-            border-color: #94a3b8 !important;
+            border-color: #3b82f6 !important;
             outline: none !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
         }
-        .btn-primary { background-color: #1e293b; color: white; border-radius: 6px; }
-        .btn-primary:hover { background-color: #334155; }
+        
+        /* ปุ่มหลักโทนสีฟ้า */
+        .btn-primary { background-color: #3b82f6; color: white; border-radius: 8px; }
+        .btn-primary:hover { background-color: #2563eb; }
+        
+        /* ปรับแต่ง SweetAlert Popup */
+        .swal2-popup { border-radius: 16px !important; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
-    <!-- Navbar Minimal -->
-    <nav class="bg-white border-b border-gray-200">
+    <!-- Navbar โทนฟ้าสว่าง -->
+    <nav class="bg-white border-b border-blue-100 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <span class="font-semibold text-lg tracking-wide text-slate-800">HW Tracker</span>
+                <div class="flex items-center gap-2">
+                    <div class="bg-blue-100 text-blue-600 p-2 rounded-lg"><i class="fas fa-book-open"></i></div>
+                    <span class="font-semibold text-lg tracking-wide text-blue-900">HW Tracker</span>
                 </div>
                 <div class="flex items-center space-x-3 text-sm">
-                    <button id="btn-admin" class="hide text-slate-600 hover:text-slate-900 font-medium px-2"><i class="fas fa-cog mr-1"></i> จัดการระบบ</button>
-                    <button id="btn-show-add" class="hide btn-primary px-4 py-2 font-medium transition"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
-                    <button id="btn-login" class="text-slate-600 hover:text-slate-900 font-medium px-2">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2">ออกจากระบบ</button>
+                    <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-2 transition"><i class="fas fa-cog mr-1"></i> จัดการระบบ</button>
+                    <button id="btn-show-add" class="hide btn-primary px-4 py-2 font-medium shadow-sm shadow-blue-200 transition"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
+                    <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-2 transition">เข้าสู่ระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -60,15 +69,15 @@
         <!-- Public View -->
         <div id="view-public" class="">
             <div class="flex justify-between items-end mb-6">
-                <h1 class="text-xl font-semibold text-slate-800">ภาระงานทั้งหมด</h1>
-                <select id="sort-select" class="bg-white text-sm px-3 py-1.5 text-slate-600">
+                <h1 class="text-xl font-semibold text-blue-950">ภาระงานทั้งหมด</h1>
+                <select id="sort-select" class="bg-white text-sm px-3 py-1.5 text-blue-800 border-blue-200 shadow-sm">
                     <option value="end_date_asc">เรียงตามกำหนดส่ง</option>
                     <option value="start_date_desc">เรียงตามวันสั่งงาน</option>
                 </select>
             </div>
 
             <div id="loading-tasks" class="text-center py-12 hide">
-                <i class="fas fa-circle-notch fa-spin text-2xl text-slate-400"></i>
+                <i class="fas fa-circle-notch fa-spin text-2xl text-blue-400"></i>
             </div>
 
             <div id="tasks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -78,31 +87,31 @@
 
         <!-- Editor View: ฟอร์มเพิ่มงาน -->
         <div id="view-editor" class="hide max-w-3xl mx-auto">
-            <div class="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+            <div class="bg-white border border-blue-100 shadow-sm shadow-blue-50 rounded-2xl p-6 sm:p-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-semibold">เพิ่มภาระงานใหม่</h2>
-                    <button class="btn-cancel text-gray-400 hover:text-gray-600"><i class="fas fa-times text-lg"></i></button>
+                    <h2 class="text-lg font-semibold text-blue-900"><i class="fas fa-edit text-blue-500 mr-2"></i>เพิ่มภาระงานใหม่</h2>
+                    <button class="btn-cancel text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
                 </div>
                 
                 <form id="form-assignment" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">เทอม</label>
-                            <select id="f-term" required class="w-full px-3 py-2 text-sm bg-gray-50"></select>
+                            <label class="block text-xs font-medium text-blue-700 mb-1">เทอม</label>
+                            <select id="f-term" required class="w-full px-3 py-2 text-sm bg-blue-50/50"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">วิชา</label>
-                            <select id="f-subject" required class="w-full px-3 py-2 text-sm bg-gray-50" disabled></select>
+                            <label class="block text-xs font-medium text-blue-700 mb-1">วิชา</label>
+                            <select id="f-subject" required class="w-full px-3 py-2 text-sm bg-blue-50/50" disabled></select>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="sm:col-span-1">
-                            <label class="block text-xs font-medium text-gray-500 mb-1">ลำดับงาน</label>
+                            <label class="block text-xs font-medium text-blue-700 mb-1">ลำดับงาน</label>
                             <input type="number" id="f-order" min="1" required class="w-full px-3 py-2 text-sm">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-gray-500 mb-1">รูปแบบงาน</label>
+                            <label class="block text-xs font-medium text-blue-700 mb-1">รูปแบบงาน</label>
                             <select id="f-type" required class="w-full px-3 py-2 text-sm">
                                 <option value="งานเดี่ยว">งานเดี่ยว</option>
                                 <option value="งานกลุ่ม">งานกลุ่ม</option>
@@ -111,33 +120,33 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">หัวข้อ</label>
+                        <label class="block text-xs font-medium text-blue-700 mb-1">หัวข้อ</label>
                         <input type="text" id="f-topic" required class="w-full px-3 py-2 text-sm">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">รายละเอียด</label>
+                        <label class="block text-xs font-medium text-blue-700 mb-1">รายละเอียด</label>
                         <textarea id="f-details" rows="2" class="w-full px-3 py-2 text-sm"></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">สั่งงาน</label>
+                            <label class="block text-xs font-medium text-blue-700 mb-1">สั่งงาน</label>
                             <input type="datetime-local" id="f-start" required class="w-full px-3 py-2 text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">กำหนดส่ง</label>
+                            <label class="block text-xs font-medium text-blue-700 mb-1">กำหนดส่ง</label>
                             <input type="datetime-local" id="f-end" required class="w-full px-3 py-2 text-sm">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">รูปภาพ (เลือกได้หลายรูป)</label>
-                        <input type="file" id="f-images" multiple accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:border-0 file:rounded file:bg-slate-100 file:text-slate-700">
+                        <label class="block text-xs font-medium text-blue-700 mb-1">รูปภาพ (เลือกได้หลายรูป)</label>
+                        <input type="file" id="f-images" multiple accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:border-0 file:rounded-md file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition cursor-pointer">
                     </div>
 
-                    <div class="pt-4">
-                        <button type="submit" id="btn-submit" class="w-full btn-primary py-2.5 text-sm transition">บันทึกข้อมูล</button>
+                    <div class="pt-5">
+                        <button type="submit" id="btn-submit" class="w-full btn-primary py-2.5 text-sm font-medium shadow-md shadow-blue-200 transition">บันทึกและแจ้งเตือน</button>
                     </div>
                 </form>
             </div>
@@ -146,45 +155,45 @@
         <!-- Admin View: จัดการระบบ -->
         <div id="view-admin" class="hide max-w-4xl mx-auto space-y-6">
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xl font-semibold text-slate-800">จัดการระบบ (Admin)</h1>
-                <button class="btn-cancel text-gray-500 hover:text-gray-800 text-sm">กลับหน้าหลัก</button>
+                <h1 class="text-xl font-semibold text-blue-900"><i class="fas fa-shield-alt text-blue-500 mr-2"></i>จัดการระบบ (Admin)</h1>
+                <button class="btn-cancel text-gray-500 hover:text-blue-600 text-sm transition">กลับหน้าหลัก</button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- จัดการเทอม -->
-                <div class="bg-white border border-gray-200 rounded-lg p-5">
-                    <h2 class="font-medium mb-4 text-slate-700">เพิ่มเทอมการศึกษา</h2>
+                <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-5">
+                    <h2 class="font-medium mb-4 text-blue-800">เพิ่มเทอมการศึกษา</h2>
                     <form id="form-term" class="space-y-3">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs text-gray-500 mb-1">เทอม (เช่น 1)</label>
+                                <label class="block text-xs text-blue-600 mb-1">เทอม (เช่น 1)</label>
                                 <input type="number" id="f-term-sem" required class="w-full px-3 py-1.5 text-sm">
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-500 mb-1">ปีการศึกษา (เช่น 2567)</label>
+                                <label class="block text-xs text-blue-600 mb-1">ปีการศึกษา (เช่น 2567)</label>
                                 <input type="number" id="f-term-year" required class="w-full px-3 py-1.5 text-sm">
                             </div>
                         </div>
-                        <label class="flex items-center text-sm text-slate-600 mt-2">
-                            <input type="checkbox" id="f-term-active" class="mr-2"> ตั้งเป็นเทอมปัจจุบัน
+                        <label class="flex items-center text-sm text-slate-600 mt-2 cursor-pointer">
+                            <input type="checkbox" id="f-term-active" class="mr-2 text-blue-600 focus:ring-blue-500 rounded"> ตั้งเป็นเทอมปัจจุบัน
                         </label>
-                        <button type="submit" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 py-2 rounded text-sm mt-3 transition">บันทึกเทอม</button>
+                        <button type="submit" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg text-sm mt-3 transition font-medium">บันทึกเทอม</button>
                     </form>
                 </div>
 
                 <!-- เพิ่ม Editor -->
-                <div class="bg-white border border-gray-200 rounded-lg p-5">
-                    <h2 class="font-medium mb-4 text-slate-700">เพิ่มบัญชี Editor</h2>
+                <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-5">
+                    <h2 class="font-medium mb-4 text-blue-800">เพิ่มบัญชีคุณครู (Editor)</h2>
                     <form id="form-editor" class="space-y-3">
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">Username (ภาษาอังกฤษ)</label>
+                            <label class="block text-xs text-blue-600 mb-1">Username (ภาษาอังกฤษ)</label>
                             <input type="text" id="f-editor-user" required class="w-full px-3 py-1.5 text-sm lowercase" pattern="[a-zA-Z0-9]+">
                         </div>
                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">รหัสผ่าน (6 ตัวขึ้นไป)</label>
+                            <label class="block text-xs text-blue-600 mb-1">รหัสผ่าน (6 ตัวขึ้นไป)</label>
                             <input type="password" id="f-editor-pass" required minlength="6" class="w-full px-3 py-1.5 text-sm">
                         </div>
-                        <button type="submit" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 py-2 rounded text-sm mt-3 transition">สร้างบัญชี</button>
+                        <button type="submit" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg text-sm mt-3 transition font-medium">สร้างบัญชี</button>
                     </form>
                 </div>
             </div>
@@ -192,8 +201,8 @@
 
     </main>
 
-    <footer class="text-center py-6 text-gray-400 text-xs mt-auto">
-        HW Tracker © 2026
+    <footer class="text-center py-6 text-blue-400 text-xs mt-auto">
+        HW Tracker © 2026 | ระบบจัดการภาระงาน
     </footer>
 
     <!-- ========================================== -->
@@ -201,11 +210,10 @@
     <!-- ========================================== -->
     <script>
         // --- [ Config ] ---
-// --- [ Config ] ---
         const SUPABASE_URL = 'https://evizikofpasozwermgja.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2aXppa29mcGFzb3p3ZXJtZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNzY1NDAsImV4cCI6MjEwNjg1MjU0MH0.2We6heZkEdzb2XClN6rbjhaOrRy9xyTGAr_GmVPZcOY';
         const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw0f_Nd6T2IX38JLLyCviq4MklmBodQfgacdSeucdYZZhj90GaUdpL3ndKfKj4CYfGn/exec';
-        const DOMAIN_SUFFIX = '@hw.local';
+        const DOMAIN_SUFFIX = '@hw.local'; 
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null;
@@ -243,7 +251,6 @@
                 document.getElementById('btn-logout').classList.remove('hide');
                 document.getElementById('btn-show-add').classList.remove('hide');
                 
-                // เช็คสิทธิ์ (Role)
                 const { data: roleData } = await supabaseClient.from('users_role').select('role').eq('user_id', currentUser.id).single();
                 if(roleData) {
                     userRole = roleData.role;
@@ -255,17 +262,55 @@
             });
         }
 
-// Login ด้วย Username (ปรับแก้ให้โชว์ Error จริงจาก Supabase)
+        // Login ด้วย Username พร้อมฟังก์ชันดูลูกตา และ Enter
         document.getElementById('btn-login').onclick = async () => {
             const { value: formValues } = await Swal.fire({
-                title: 'เข้าสู่ระบบ',
-                html:
-                    '<input id="swal-user" type="text" class="swal2-input text-sm" placeholder="Username">' +
-                    '<input id="swal-pass" type="password" class="swal2-input text-sm" placeholder="Password">',
+                title: '<span class="text-blue-700 font-semibold">เข้าสู่ระบบ</span>',
+                html: `
+                    <div class="flex flex-col gap-4 text-left mt-2 px-1">
+                        <div>
+                            <label class="block text-xs text-blue-600 mb-1 ml-1 font-medium">Username</label>
+                            <input id="swal-user" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition outline-none" placeholder="กรอกชื่อผู้ใช้">
+                        </div>
+                        <div class="relative">
+                            <label class="block text-xs text-blue-600 mb-1 ml-1 font-medium">Password</label>
+                            <input id="swal-pass" type="password" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition outline-none pr-10" placeholder="กรอกรหัสผ่าน">
+                            <button type="button" id="toggle-pass" class="absolute right-3 top-[28px] text-gray-400 hover:text-blue-600 transition p-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                `,
                 focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonText: 'เข้าสู่ระบบ',
-                confirmButtonColor: '#1e293b',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#3b82f6',
+                didOpen: () => {
+                    const userInp = document.getElementById('swal-user');
+                    const passInp = document.getElementById('swal-pass');
+                    const toggleBtn = document.getElementById('toggle-pass');
+
+                    // ระบบกดเพื่อดูรหัสผ่าน
+                    toggleBtn.onclick = () => {
+                        if (passInp.type === 'password') {
+                            passInp.type = 'text';
+                            toggleBtn.innerHTML = '<i class="fas fa-eye-slash text-blue-500"></i>';
+                        } else {
+                            passInp.type = 'password';
+                            toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                        }
+                    };
+
+                    // ระบบกด Enter เพื่อล็อกอิน
+                    const handleEnter = (e) => {
+                        if (e.key === 'Enter') {
+                            Swal.clickConfirm();
+                        }
+                    };
+                    userInp.addEventListener('keydown', handleEnter);
+                    passInp.addEventListener('keydown', handleEnter);
+                },
                 preConfirm: () => {
                     const user = document.getElementById('swal-user').value.trim().toLowerCase();
                     const pass = document.getElementById('swal-pass').value;
@@ -284,12 +329,7 @@
                 });
                 
                 if (error) {
-                    // โชว์ Error จริงๆ จากระบบ
-                    Swal.fire({ 
-                        icon: 'error', 
-                        title: 'เข้าสู่ระบบไม่ได้', 
-                        text: 'สาเหตุ: ' + error.message 
-                    });
+                    Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่ได้', text: 'สาเหตุ: ' + error.message, confirmButtonColor: '#ef4444' });
                 } else {
                     Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
                 }
@@ -318,32 +358,32 @@
             let sortedData = [...globalAssignments];
             sortedData.sort((a, b) => sortMode === 'end_date_asc' ? new Date(a.end_date) - new Date(b.end_date) : new Date(b.start_date) - new Date(a.start_date));
 
-            tasksContainer.innerHTML = sortedData.length === 0 ? `<p class="text-slate-400 text-center col-span-full py-8 text-sm">ไม่มีข้อมูลภาระงาน</p>` : '';
+            tasksContainer.innerHTML = sortedData.length === 0 ? `<p class="text-blue-300 text-center col-span-full py-8 text-sm">ไม่มีข้อมูลภาระงานในขณะนี้</p>` : '';
 
             sortedData.forEach(task => {
                 const subj = task.subjects;
                 const imgs = task.images_data || [];
-                const imgThumb = imgs.length > 0 ? `<img src="${imgs[0].lh_url}" class="w-full h-28 object-cover rounded mt-3 cursor-pointer" onclick="window.open('${imgs[0].lh_url}')">` : '';
-                const deleteBtn = currentUser ? `<button onclick="deleteAssignment(${task.id})" class="absolute top-3 right-3 text-red-400 hover:text-red-600 transition"><i class="fas fa-trash-alt"></i></button>` : '';
+                const imgThumb = imgs.length > 0 ? `<img src="${imgs[0].lh_url}" class="w-full h-32 object-cover rounded-lg mt-3 cursor-pointer shadow-sm" onclick="window.open('${imgs[0].lh_url}')">` : '';
+                const deleteBtn = currentUser ? `<button onclick="deleteAssignment(${task.id})" class="absolute top-3 right-3 text-red-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition"><i class="fas fa-trash-alt"></i></button>` : '';
 
                 const cardHtml = `
-                    <div class="bg-white border border-gray-200 rounded-lg p-5 relative hover:border-gray-300 transition flex flex-col h-full">
+                    <div class="bg-white border border-blue-50 shadow-sm shadow-blue-100/50 rounded-2xl p-5 relative hover:shadow-md hover:border-blue-100 transition-all flex flex-col h-full">
                         ${deleteBtn}
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded font-medium">${subj.subject_code}</span>
-                            <span class="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded">${task.work_type}</span>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-1 rounded-md font-medium tracking-wide">${subj.subject_code}</span>
+                            <span class="bg-indigo-50 text-indigo-600 text-[10px] px-2 py-1 rounded-md tracking-wide">${task.work_type}</span>
                         </div>
-                        <h3 class="font-medium text-slate-800 text-sm mb-1 pr-6">${task.topic}</h3>
-                        <p class="text-xs text-slate-500 mb-2">${subj.teacher_name}</p>
-                        <p class="text-xs text-slate-600 line-clamp-2 flex-grow">${task.details || '-'}</p>
+                        <h3 class="font-medium text-blue-950 text-sm mb-1 pr-6">${task.topic}</h3>
+                        <p class="text-xs text-blue-500 mb-2"><i class="fas fa-user-tie mr-1 opacity-70"></i>${subj.teacher_name}</p>
+                        <div class="text-xs text-slate-600 bg-slate-50/50 p-2.5 rounded-lg border border-slate-100 flex-grow mb-2 line-clamp-3">${task.details || '-'}</div>
                         ${imgThumb}
                         
-                        <div class="border-t border-gray-100 pt-3 mt-4">
-                            <div class="flex justify-between text-xs mb-2">
-                                <span class="text-slate-500">กำหนดส่ง:</span>
-                                <span class="text-slate-700 font-medium">${new Date(task.end_date).toLocaleDateString('th-TH')}</span>
+                        <div class="border-t border-blue-50 pt-3 mt-4">
+                            <div class="flex justify-between items-center text-xs mb-2">
+                                <span class="text-blue-500"><i class="far fa-calendar-alt mr-1"></i>กำหนดส่ง:</span>
+                                <span class="text-blue-900 font-medium">${new Date(task.end_date).toLocaleDateString('th-TH')} ${new Date(task.end_date).toLocaleTimeString('th-TH').slice(0,5)}</span>
                             </div>
-                            <div class="text-center p-1.5 rounded bg-slate-50 border border-slate-100 text-xs font-mono text-slate-700 timer-container" data-end="${task.end_date}">
+                            <div class="text-center p-2 rounded-lg bg-blue-50 border border-blue-100 text-xs font-mono text-blue-800 timer-container" data-end="${task.end_date}">
                                 <span class="countdown-text">คำนวณเวลา...</span>
                             </div>
                         </div>
@@ -359,14 +399,22 @@
                 const distance = new Date(el.dataset.end).getTime() - new Date().getTime();
                 const textEl = el.querySelector('.countdown-text');
 
+                // รีเซ็ตคลาสก่อนเพื่อไม่ให้ค้าง
+                el.className = 'text-center p-2 rounded-lg text-xs font-mono timer-container ' + el.dataset.end;
+
                 if (distance < 0) {
-                    textEl.innerHTML = "หมดเวลาส่ง";
-                    el.classList.add('bg-red-50', 'text-red-600', 'border-red-100');
+                    textEl.innerHTML = "หมดเวลาส่งงาน";
+                    el.classList.add('bg-red-50', 'text-red-600', 'border', 'border-red-100');
                 } else {
                     const d = Math.floor(distance / (1000 * 60 * 60 * 24));
                     const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     textEl.innerHTML = `เหลือ ${d} วัน ${h} ชม.`;
-                    if (d < 2) el.classList.add('text-orange-600');
+                    
+                    if (d < 2) {
+                        el.classList.add('bg-orange-50', 'text-orange-600', 'border', 'border-orange-100');
+                    } else {
+                        el.classList.add('bg-blue-50', 'text-blue-800', 'border', 'border-blue-100');
+                    }
                 }
             });
         }
@@ -386,10 +434,7 @@
             e.preventDefault();
             const isActive = document.getElementById('f-term-active').checked;
             
-            // ถ้าเลือกเป็น Active ให้ไปเคลียร์ของเก่าให้เป็น false ก่อน
-            if(isActive) {
-                await supabaseClient.from('terms').update({ is_active: false }).neq('id', 0);
-            }
+            if(isActive) await supabaseClient.from('terms').update({ is_active: false }).neq('id', 0);
 
             const { error } = await supabaseClient.from('terms').insert([{
                 semester: document.getElementById('f-term-sem').value,
@@ -403,7 +448,7 @@
             }
         };
 
-        // --- Admin Form: Add Editor (ใช้ Signup ภายใต้โดเมนจำลอง) ---
+        // --- Admin Form: Add Editor ---
         document.getElementById('form-editor').onsubmit = async (e) => {
             e.preventDefault();
             const user = document.getElementById('f-editor-user').value.toLowerCase();
@@ -411,7 +456,6 @@
             
             Swal.fire({title: 'กำลังสร้างบัญชี...', didOpen: () => Swal.showLoading()});
             
-            // ใช้คำสั่ง Signup ของ Supabase
             const { data, error } = await supabaseClient.auth.signUp({
                 email: user + DOMAIN_SUFFIX,
                 password: pass
@@ -422,16 +466,19 @@
                 return;
             }
 
-            // เพิ่ม Role Editor ให้บัญชีใหม่
             await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: 'editor' }]);
             
-            Swal.fire('สำเร็จ', 'สร้างบัญชี Editor แล้ว<br><span class="text-sm text-red-500">ระบบจะให้คุณเข้าสู่ระบบใหม่เพื่อความปลอดภัย</span>', 'success').then(() => {
-                supabaseClient.auth.signOut(); // บังคับออกระบบป้องกัน Session ทับกัน
+            Swal.fire({
+                title: 'สำเร็จ', 
+                html: 'สร้างบัญชี Editor แล้ว<br><span class="text-sm text-red-500">ระบบจะให้คุณเข้าสู่ระบบใหม่เพื่อความปลอดภัย</span>', 
+                icon: 'success',
+                confirmButtonColor: '#3b82f6'
+            }).then(() => {
+                supabaseClient.auth.signOut(); 
             });
         };
 
         // --- ระบบ Editor (ฟอร์มเพิ่มงาน) ---
-        // (ส่วนนี้ใช้ลอจิกเดิมจากโค้ดชุดที่แล้ว ในการโหลดรายวิชาและบันทึกข้อมูลครับ)
         async function loadTermsDropdown() {
             const { data } = await supabaseClient.from('terms').select('*').eq('is_active', true);
             const sel = document.getElementById('f-term');
@@ -490,16 +537,25 @@
             } catch(e) {
                 Toast.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด' });
             } finally {
-                btn.disabled = false; btn.innerText = 'บันทึกข้อมูล';
+                btn.disabled = false; btn.innerText = 'บันทึกและแจ้งเตือน';
             }
         };
 
         async function deleteAssignment(id) {
-            if(confirm('ต้องการลบงานนี้หรือไม่?')) {
-                await supabaseClient.from('assignments').delete().eq('id', id);
-                Toast.fire({ icon: 'success', title: 'ลบข้อมูลแล้ว' });
-                fetchAssignments();
-            }
+            Swal.fire({
+                title: 'ต้องการลบงานนี้หรือไม่?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'ลบข้อมูล'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await supabaseClient.from('assignments').delete().eq('id', id);
+                    Toast.fire({ icon: 'success', title: 'ลบข้อมูลแล้ว' });
+                    fetchAssignments();
+                }
+            });
         }
     </script>
 </body>
