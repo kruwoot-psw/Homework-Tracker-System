@@ -50,7 +50,6 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-2">
-                    <!-- โลโก้รูปภาพจาก Drive (แก้ไขเครื่องหมายคำพูดเกินเรียบร้อย) -->
                     <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-10 w-auto object-contain drop-shadow-sm rounded-md">
                     <span class="font-semibold text-lg tracking-wide text-blue-900">HW Tracker</span>
                 </div>
@@ -82,7 +81,7 @@
             <div id="tasks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         </div>
 
-        <!-- EDITOR VIEW -->
+        <!-- EDITOR VIEW (สำหรับ User/Editor สั่งงานอย่างเดียว) -->
         <div id="view-editor" class="hide max-w-3xl mx-auto">
             <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-6 sm:p-8">
                 <div class="flex justify-between items-center mb-6">
@@ -144,7 +143,7 @@
             </div>
         </div>
 
-        <!-- ADMIN VIEW -->
+        <!-- ADMIN VIEW (สำหรับ Admin จัดการทุกอย่างแบบ CRUD) -->
         <div id="view-admin" class="hide max-w-4xl mx-auto space-y-6">
             <div class="flex justify-between items-center mb-2 px-2">
                 <h1 class="text-xl font-semibold text-blue-900"><i class="fas fa-shield-alt text-blue-500 mr-2"></i>ระบบจัดการหลังบ้าน (Admin)</h1>
@@ -193,21 +192,10 @@
                 </div>
             </div>
 
-            <!-- 3. จัดการบัญชีผู้ใช้ -->
+            <!-- 3. จัดการบัญชีผู้ใช้ (Full CRUD สำหรับ Admin) -->
             <div class="bg-white border border-blue-100 shadow-sm rounded-2xl p-5">
                 <div class="flex justify-between items-center mb-2">
-                    <h2 class="font-medium text-blue-800 text-lg"><i class="fas fa-users text-blue-400 mr-2"></i>3. จัดการบัญชีผู้ใช้งานระบบ</h2>
-                </div>
-                
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-5 text-xs text-slate-600 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-medium"><i class="fas fa-shield-alt"></i> Admin</span>
-                        <span class="ml-1">= จัดการทุกเมนูในหน้านี้ (เพิ่มบัญชี/ระงับสิทธิ์) ได้ทั้งหมด</span>
-                    </div>
-                    <div>
-                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium"><i class="fas fa-edit"></i> Editor</span>
-                        <span class="ml-1">= สำหรับคุณครู เข้าใช้เมนู "สั่งงาน" เท่านั้น</span>
-                    </div>
+                    <h2 class="font-medium text-blue-800 text-lg"><i class="fas fa-users text-blue-400 mr-2"></i>3. จัดการบัญชีผู้ใช้งานระบบ (Admin CRUD)</h2>
                 </div>
                 
                 <form id="form-user-add" class="flex flex-col sm:flex-row gap-3 items-end mb-5 bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
@@ -232,7 +220,7 @@
                 <div class="overflow-x-auto border border-blue-50 rounded-xl">
                     <table class="w-full text-sm text-left text-slate-600">
                         <thead class="text-xs text-blue-700 bg-blue-50/70">
-                            <tr><th class="px-4 py-3 font-medium">บัญชีผู้ใช้ (Username)</th><th class="px-4 py-3 font-medium">ระดับสิทธิ์ปัจจุบัน</th><th class="px-4 py-3 font-medium text-right">การจัดการ</th></tr>
+                            <tr><th class="px-4 py-3 font-medium">บัญชีผู้ใช้ (Username)</th><th class="px-4 py-3 font-medium">ระดับสิทธิ์</th><th class="px-4 py-3 font-medium text-right">การจัดการ</th></tr>
                         </thead>
                         <tbody id="users-table-body" class="divide-y divide-blue-50"></tbody>
                     </table>
@@ -274,7 +262,7 @@
             setInterval(updateCountdowns, 60000);
         };
 
-// --- AUTH LOGIC (แก้ไขปัญหารีเฟรชไม่หยุด) ---
+        // --- AUTH LOGIC ---
         async function checkUserSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
@@ -288,12 +276,6 @@
                     if(userRole === 'admin') document.getElementById('btn-admin').classList.remove('hide');
                     if(userRole === 'editor' || userRole === 'admin') document.getElementById('btn-show-add').classList.remove('hide');
                 } else {
-                    // ถ้ายังไม่มีข้อมูลสิทธิ์ ให้ใส่สิทธิ์ชั่วคราวโดยไม่ต้องสั่งรีเฟรชหน้าเว็บซ้ำ
-                    await supabaseClient.from('users_role').insert([{
-                        user_id: currentUser.id,
-                        role: 'admin',
-                        username: currentUser.email ? currentUser.email.split('@')[0] : 'admin'
-                    }]);
                     userRole = 'admin';
                     document.getElementById('btn-admin').classList.remove('hide');
                     document.getElementById('btn-show-add').classList.remove('hide');
@@ -306,11 +288,10 @@
                 document.getElementById('btn-admin').classList.add('hide');
                 document.getElementById('btn-show-add').classList.add('hide');
             }
-            
-            // ปิดการใช้ window.location.reload() ตรงนี้เพื่อป้องกันการรีเฟรชวนลูป
+
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-                    checkUserSession(); // แค่เรียกฟังก์ชันตรวจสอบสถานะใหม่โดยไม่ต้องรีเฟรชหน้าจอ
+                    checkUserSession();
                 }
             });
         }
@@ -446,7 +427,7 @@
         document.querySelectorAll('.btn-cancel').forEach(btn => btn.onclick = () => switchView(viewPublic));
 
         // ==========================================
-        // EDITOR PANEL (Form สั่งงาน)
+        // EDITOR PANEL (Form สั่งงานสำหรับ User/Editor)
         // ==========================================
         const fileInput = document.getElementById('f-images');
         const previewContainer = document.getElementById('image-previews');
@@ -520,10 +501,10 @@
         };
 
         // ==========================================
-        // ADMIN PANEL
+        // ADMIN PANEL (CRUD จัดการเทอม, วิชา, บัญชีผู้ใช้)
         // ==========================================
         
-        // 1 & 2. จัดการเทอมและวิชา
+        // 1. จัดการเทอม
         document.getElementById('form-term').onsubmit = async (e) => {
             e.preventDefault(); const isActive = document.getElementById('f-term-active').checked;
             if(isActive) await supabaseClient.from('terms').update({ is_active: false }).neq('id', 0);
@@ -551,6 +532,7 @@
         async function editTerm(id, sem, year) { const { value: form } = await Swal.fire({ title: 'แก้ไขเทอม', html: `<input id="e-sem" class="swal2-input" placeholder="เทอม" value="${sem}"><input id="e-year" class="swal2-input" placeholder="ปีการศึกษา" value="${year}">`, preConfirm: () => ({ sem: document.getElementById('e-sem').value, year: document.getElementById('e-year').value }) }); if(form) { await supabaseClient.from('terms').update({ semester: form.sem, academic_year: form.year }).eq('id', id); fetchAllTerms(); } }
         async function deleteTerm(id) { if(confirm('ลบเทอมนี้? ข้อมูลวิชาและงานจะหายไปด้วย!')) { await supabaseClient.from('terms').delete().eq('id', id); fetchAllTerms(); } }
 
+        // 2. จัดการวิชา
         document.getElementById('form-add-subject').onsubmit = async (e) => {
             e.preventDefault(); const termId = document.getElementById('admin-term-select').value; if(!termId) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกเทอมก่อน', 'warning');
             await supabaseClient.from('subjects').insert([{ term_id: termId, subject_code: document.getElementById('f-sub-code').value, subject_name: document.getElementById('f-sub-name').value, teacher_name: document.getElementById('f-sub-teacher').value }]);
@@ -568,7 +550,7 @@
         async function editSubject(id, code, name, teacher) { const { value: form } = await Swal.fire({ title: 'แก้ไขรายวิชา', html: `<input id="e-sub-code" class="swal2-input text-sm" value="${code}"><input id="e-sub-name" class="swal2-input text-sm" value="${name}"><input id="e-sub-teacher" class="swal2-input text-sm" value="${teacher}">`, preConfirm: () => ({ code: document.getElementById('e-sub-code').value, name: document.getElementById('e-sub-name').value, teacher: document.getElementById('e-sub-teacher').value }) }); if(form) { await supabaseClient.from('subjects').update({ subject_code: form.code, subject_name: form.name, teacher_name: form.teacher }).eq('id', id); loadAdminSubjects(); } }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        // 3. จัดการบัญชีผู้ใช้
+        // 3. จัดการบัญชีผู้ใช้ (Admin CRUD)
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({title: 'กำลังสร้างบัญชี...', didOpen: () => Swal.showLoading()});
@@ -577,15 +559,10 @@
             const pass = document.getElementById('f-add-pass').value;
             const role = document.getElementById('f-add-role').value;
             
-            // 1. สร้างบัญชีใน Supabase Auth
             const { data, error } = await supabaseClient.auth.signUp({ email: user + DOMAIN_SUFFIX, password: pass });
-            if(error) { 
-                Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); 
-                return; 
-            }
+            if(error) { Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); return; }
             
             if (data.user) {
-                // 2. บันทึกสิทธิ์ลงตาราง users_role ทันทีโดยผูกกับ UID ที่เพิ่งสร้าง
                 const { error: roleError } = await supabaseClient.from('users_role').insert([{
                     user_id: data.user.id,
                     role: role,
@@ -598,8 +575,9 @@
                 }
             }
             
-            Swal.fire({ title: 'สร้างบัญชีสำเร็จ', html: `สร้างบัญชี <b>${user}</b> เรียบร้อย!<br><span class="text-xs text-red-500">ระบบจะทำการออกจากระบบ เพื่อให้คุณล็อกอินใหม่</span>`, icon: 'success'
-            }).then(() => supabaseClient.auth.signOut());
+            Swal.fire({ title: 'สร้างบัญชีสำเร็จ', html: `สร้างบัญชี <b>${user}</b> เรียบร้อย!`, icon: 'success' });
+            e.target.reset(); 
+            fetchAppUsers();
         };
 
         async function fetchAppUsers() {
@@ -615,11 +593,12 @@
                 const badge = isAdmin ? '<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-medium"><i class="fas fa-shield-alt mr-1"></i>Admin</span>' : '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px]"><i class="fas fa-edit mr-1"></i>Editor</span>';
                 const name = user.username || '-';
                 
-                // ป้องกันไม่ให้แก้/ลบ Admin ด้วยกันเอง (ขึ้นรูปแม่กุญแจ)
-                const actionBtns = isAdmin 
-                    ? `<span class="text-xs text-slate-400"><i class="fas fa-lock mr-1"></i> ห้ามแก้ไข/ลบ</span>`
+                // ป้องกันไม่ให้แก้/ลบ Admin ตัวเอง (ล็อกกุญแจ)
+                const isSelf = currentUser && currentUser.id === user.user_id;
+                const actionBtns = isSelf
+                    ? `<span class="text-xs text-slate-400"><i class="fas fa-lock mr-1"></i> บัญชีของคุณ</span>`
                     : `<button onclick="editAppUser('${user.user_id}', '${name}', '${user.role}')" class="text-xs text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded transition mr-1"><i class="fas fa-pen"></i> แก้ไข</button>
-                       <button onclick="deleteAppUser('${user.user_id}', '${name}')" class="text-xs text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition"><i class="fas fa-ban"></i> ระงับสิทธิ์</button>`;
+                       <button onclick="deleteAppUser('${user.user_id}', '${name}')" class="text-xs text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition"><i class="fas fa-trash"></i> ลบ</button>`;
 
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-blue-50/30 transition">
@@ -636,7 +615,7 @@
                 html: `
                     <div class="text-left space-y-3 mt-4">
                         <div><label class="text-xs font-medium text-slate-600">Username</label><input id="eu-name" class="swal2-input !mt-1 !w-full !m-0 text-sm lowercase" value="${currentName}"></div>
-                        <div><label class="text-xs font-medium text-slate-600">ระดับสิทธิ์ (สามารถเปลี่ยนให้เป็น Admin ได้)</label>
+                        <div><label class="text-xs font-medium text-slate-600">ระดับสิทธิ์</label>
                             <select id="eu-role" class="swal2-input !mt-1 !w-full !m-0 text-sm h-10">
                                 <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option>
                                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option>
@@ -661,12 +640,12 @@
         }
 
         async function deleteAppUser(uid, name) {
-            Swal.fire({ title: `ระงับสิทธิ์บัญชี ${name}?`, text: 'บัญชีนี้จะไม่สามารถเข้าใช้งานระบบได้อีก', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'ระงับสิทธิ์'
+            Swal.fire({ title: `ต้องการลบบัญชี ${name}?`, text: 'การกระทำนี้จะลบสิทธิ์การเข้าใช้งานของผู้ใช้นี้ทันที', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'ลบทิ้ง'
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({title: 'กำลังดำเนินการ...', didOpen: () => Swal.showLoading()});
+                    Swal.fire({title: 'กำลังลบ...', didOpen: () => Swal.showLoading()});
                     await supabaseClient.from('users_role').delete().eq('user_id', uid);
-                    Toast.fire({ icon: 'success', title: 'ระงับสิทธิ์สำเร็จ' });
+                    Toast.fire({ icon: 'success', title: 'ลบบัญชีสำเร็จ' });
                     fetchAppUsers();
                 }
             });
