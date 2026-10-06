@@ -68,14 +68,14 @@
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center gap-3 cursor-pointer" onclick="switchView(viewPublic)">
                     <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-10 w-auto object-contain drop-shadow-sm rounded-md">
-                    <span class="text-xl tracking-wide text-blue-900 font-bold">HW Tracker</span>
+                    <span class="text-xl tracking-wide text-blue-900 font-bold">HW Tracker By Kru WooT</span>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-3 text-sm">
                     <span id="user-display" class="text-blue-700 font-medium hidden sm:inline-block bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"></span>
                     <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการระบบ</button>
                     <button id="btn-show-add" class="hide btn-primary px-4 py-2 font-medium shadow-sm shadow-blue-200 transition"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
                     <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -114,9 +114,11 @@
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="sm:col-span-1 relative">
-                            <label class="block text-sm font-semibold text-blue-800 mb-1.5">ลำดับงาน</label>
-                            <input type="number" id="f-order" required readonly class="w-full bg-gray-100 text-gray-500 font-bold cursor-not-allowed">
-                            <span class="absolute right-3 top-[38px] text-xs text-gray-400">อัตโนมัติ</span>
+                            <label class="block text-sm font-semibold text-blue-800 mb-1.5 flex justify-between items-center">
+                                <span>ลำดับงาน</span>
+                                <span id="order-badge" class="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-normal">อัตโนมัติ</span>
+                            </label>
+                            <input type="number" id="f-order" required readonly class="w-full bg-gray-100 text-gray-600 font-bold cursor-not-allowed">
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-semibold text-blue-800 mb-1.5">รูปแบบงาน</label>
@@ -265,7 +267,7 @@
     </main>
 
     <footer class="text-center py-6 text-blue-500 text-sm mt-auto border-t border-blue-50">
-        HW Tracker © 2026 | ระบบจัดการภาระงาน Homework-Tracker
+        HW Tracker © 2026 | ระบบจัดการภาระงาน Homework-Tracker-System By Kru WooT
     </footer>
 
     <script>
@@ -323,7 +325,7 @@
             } else {
                 currentUser = null;
                 userRole = null;
-                document.getElementById('btn-login').classList.remove('hide');
+                document.getElementById('btn-login').classList.add('hide');
                 document.getElementById('btn-logout').classList.add('hide');
                 document.getElementById('btn-admin').classList.add('hide');
                 document.getElementById('btn-show-add').classList.add('hide');
@@ -521,7 +523,22 @@
         function removeImage(index) { selectedFiles.splice(index, 1); renderPreviews(); }
 
         async function initEditorForm() {
-            document.getElementById('form-assignment').reset(); selectedFiles = []; renderPreviews(); document.getElementById('f-order').value = '';
+            document.getElementById('form-assignment').reset(); selectedFiles = []; renderPreviews(); 
+            const orderInput = document.getElementById('f-order');
+            
+            // ตั้งค่าสิทธิ์ช่องลำดับงาน: ถ้าเป็น Admin ให้แก้ได้, ถ้าไม่ใช่ให้ล็อกไว้
+            if (userRole === 'admin') {
+                orderInput.removeAttribute('readonly');
+                orderInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                orderInput.classList.add('bg-white', 'border-blue-300');
+                document.getElementById('order-badge').innerText = 'Admin แก้ไขได้';
+            } else {
+                orderInput.setAttribute('readonly', true);
+                orderInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                orderInput.classList.remove('bg-white', 'border-blue-300');
+                document.getElementById('order-badge').innerText = 'อัตโนมัติ';
+            }
+
             const now = new Date(); document.getElementById('f-start').value = now.toISOString().slice(0,16); now.setDate(now.getDate() + 7); document.getElementById('f-end').value = now.toISOString().slice(0,16);
 
             const { data: term } = await supabaseClient.from('terms').select('*').eq('is_active', true).single();
@@ -713,34 +730,25 @@
                 html: `
                     <div class="text-left space-y-3 mt-3">
                         <div><label class="text-sm font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full lowercase" value="${currentName}"></div>
-                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">รหัสผ่านใหม่ (กรอกหากต้องการเปลี่ยน)</label><input type="text" id="eu-pass" class="w-full" placeholder="กรอกรหัสผ่านใหม่ที่ต้องการเปลี่ยน"></div>
                         <div><label class="text-sm font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label>
                             <select id="eu-role" class="w-full">
                                 <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option>
                                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option>
                             </select>
                         </div>
-                        <p class="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg"><i class="fas fa-info-circle"></i> หมายเหตุ: การเปลี่ยนรหัสผ่านผ่านหน้าเว็บ อาจต้องอาศัยสิทธิ์ผู้ดูแลระบบสูงสุด (Service Role) ใน Supabase หากติดปัญหา แนะนำให้ไปเปลี่ยนที่เมนู Supabase > Authentication > Users โดยตรง</p>
                     </div>
                 `,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
                 preConfirm: () => {
                     const n = document.getElementById('eu-name').value.trim().toLowerCase();
-                    const p = document.getElementById('eu-pass').value;
                     if(!n) { Swal.showValidationMessage('กรุณากรอก Username'); return false; }
-                    return { username: n, password: p, role: document.getElementById('eu-role').value }
+                    return { username: n, role: document.getElementById('eu-role').value }
                 }
             });
 
             if (formValues) {
                 Swal.fire({title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-                
-                if (formValues.password && formValues.password.length >= 6) {
-                    await supabaseClient.auth.admin.updateUserById(uid, { password: formValues.password }).catch(() => {});
-                }
-
                 await supabaseClient.from('users_role').update({ username: formValues.username, role: formValues.role }).eq('user_id', uid);
-                
                 Toast.fire({ icon: 'success', title: 'อัปเดตบัญชีสำเร็จ' });
                 fetchAppUsers();
             }
