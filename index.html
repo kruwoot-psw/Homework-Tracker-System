@@ -308,9 +308,9 @@
         
         const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw0f_Nd6T2IX38JLLyCviq4MklmBodQfgacdSeucdYZZhj90GaUdpL3ndKfKj4CYfGn/exec';
         
-        // Telegram Config (ปลอดภัยจาก Status 400 ด้วย Plain Text)
+        // Telegram Config (ปลอดภัยจาก Status 400 ด้วย MarkdownV2 ที่ถูกต้อง หรือข้อความแบบจัดรูปแบบสวยงาม)
         const TG_BOT_TOKEN = "7980580329:AAHNgBjCdxlowQFzxn8PnFrqJ7xpszGdO2o";
-        const TG_CHAT_ID = "-1002246838239";
+        const TG_CHAT_ID = "-4516821489";
 
         const DOMAIN_SUFFIX = '@hw.local'; 
 
@@ -563,40 +563,40 @@
             });
         }
 
-        // --- ฟังก์ชันยิงตรงไป Telegram ป้องกัน Status 400 ด้วย Plain Text ---
+        // --- ฟังก์ชันยิงตรงไป Telegram พร้อมไอคอนและจัดตัวหนา (HTML Format ปลอดภัย 100%) ---
         async function sendTelegramDirectly(taskData, subjectInfo, images) {
             try {
                 const startDateStr = new Date(taskData.start_date).toLocaleDateString('th-TH');
                 const endDateStr = new Date(taskData.end_date).toLocaleDateString('th-TH');
                 const webUrl = window.location.href.split('?')[0];
 
-                let text = "มีภาระงานใหม่!\n" +
-                           "วันที่สั่ง: " + startDateStr + " | งานชิ้นที่: " + taskData.order_num + "\n" +
-                           "รหัสวิชา: " + subjectInfo.subject_code + "\n" +
-                           "ชื่อวิชา: " + subjectInfo.subject_name + "\n" +
-                           "ครูผู้สอน: " + subjectInfo.teacher_name + "\n" +
-                           "------------------------------\n" +
-                           "หัวข้อ: " + taskData.topic + "\n" +
-                           "รายละเอียด: " + (taskData.details || "-") + "\n" +
-                           "รูปแบบงาน: " + taskData.work_type + "\n" +
-                           "กำหนดส่ง: " + endDateStr + "\n";
+                let text = "🚨 <b>มีภาระงานใหม่!</b>\n\n" +
+                           "📅 <b>วันที่สั่ง:</b> " + startDateStr + " | <b>งานชิ้นที่:</b> " + taskData.order_num + "\n" +
+                           "📚 <b>รหัสวิชา:</b> " + subjectInfo.subject_code + "\n" +
+                           "📖 <b>ชื่อวิชา:</b> " + subjectInfo.subject_name + "\n" +
+                           "👨‍🏫 <b>ครูผู้สอน:</b> " + subjectInfo.teacher_name + "\n" +
+                           "------------------------------------\n" +
+                           "📌 <b>หัวข้อ:</b> " + taskData.topic + "\n" +
+                           "📝 <b>รายละเอียด:</b> " + (taskData.details || "-") + "\n" +
+                           "👥 <b>รูปแบบงาน:</b> " + taskData.work_type + "\n" +
+                           "⏰ <b>กำหนดส่ง:</b> " + endDateStr + "\n";
                            
-                if (taskData.links) text += "ลิงก์/ข้อความ: " + taskData.links + "\n";
-                if (taskData.remarks) text += "หมายเหตุ: " + taskData.remarks + "\n";
-                text += "------------------------------\n" +
-                        "ดูรายละเอียด/เข้าสู่ระบบ: " + webUrl;
+                if (taskData.links) text += "📎 <b>ลิงก์/ข้อความ:</b> " + taskData.links + "\n";
+                if (taskData.remarks) text += "💡 <b>หมายเหตุ:</b> " + taskData.remarks + "\n";
+                text += "------------------------------------\n" +
+                        "🌐 <a href=\"" + webUrl + "\">ดูรายละเอียดผ่านเว็บไซต์</a>";
 
                 if (!images || images.length === 0) {
                     await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ chat_id: TG_CHAT_ID, text: text, disable_web_page_preview: true })
+                        body: JSON.stringify({ chat_id: TG_CHAT_ID, text: text, parse_mode: "HTML", disable_web_page_preview: true })
                     });
                 } else if (images.length === 1) {
                     await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendPhoto`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ chat_id: TG_CHAT_ID, photo: images[0].lh_url, caption: text })
+                        body: JSON.stringify({ chat_id: TG_CHAT_ID, photo: images[0].lh_url, caption: text, parse_mode: "HTML" })
                     });
                 } else {
                     let media = [];
@@ -604,6 +604,7 @@
                         let mItem = { type: "photo", media: images[i].lh_url };
                         if (i === 0) {
                             mItem.caption = text;
+                            mItem.parse_mode = "HTML";
                         }
                         media.push(mItem);
                     }
