@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบแจ้งเตือนภาระงาน (Homework Tracker)</title>
+    <title>ระบบจัดการภาระงาน (Homework Tracker)</title>
     
     <!-- CSS / Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -294,7 +294,7 @@
     </main>
 
     <footer class="text-center py-4 text-blue-500 text-xs mt-auto border-t border-blue-50">
-        HW Tracker © 2026 | ระบบแจ้งเตือนภาระงานโรงเรียน
+        HW Tracker © 2026 | ระบบจัดการภาระงานโรงเรียน
     </footer>
 
     <script>
@@ -307,6 +307,11 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw0f_Nd6T2IX38JLLyCviq4MklmBodQfgacdSeucdYZZhj90GaUdpL3ndKfKj4CYfGn/exec';
+        
+        // Telegram Config สำหรับยิงตรงจากหน้าเว็บ
+        const TG_BOT_TOKEN = "7980580329:AAHNgBjCdxlowQFzxn8PnFrqJ7xpszGdO2o";
+        const TG_CHAT_ID = "-4516821489";
+
         const DOMAIN_SUFFIX = '@hw.local'; 
 
         let currentUser = null, userRole = null, globalAssignments = [], globalSubjects = [];
@@ -403,12 +408,7 @@
                 Toast.fire({ icon: 'info', title: 'กำลังตรวจสอบ...' });
                 const { error } = await supabaseClient.auth.signInWithPassword(formValues);
                 if (error) {
-                    Swal.fire({ 
-                        icon: 'error', 
-                        title: 'ไม่พบผู้ใช้', 
-                        text: 'กรุณาตรวจสอบ username password อีกครั้ง', 
-                        confirmButtonColor: '#ef4444' 
-                    });
+                    Swal.fire({ icon: 'error', title: 'ไม่พบผู้ใช้', text: 'กรุณาตรวจสอบ username password อีกครั้ง', confirmButtonColor: '#ef4444' });
                 } else {
                     Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
                     switchView(viewPublic);
@@ -482,9 +482,9 @@
                 
                 let rowBgClass = '';
                 if (endTime < now) {
-                    rowBgClass = 'bg-slate-200/70 text-slate-500'; // เลยเวลา -> สีเทาเข้มขึ้น
+                    rowBgClass = 'bg-slate-200/70 text-slate-500';
                 } else if (diffHours <= 48 && diffHours > 0) {
-                    rowBgClass = 'bg-red-100/70'; // ใกล้กำหนดส่ง -> สีแดงพาสเทลเข้มขึ้น
+                    rowBgClass = 'bg-red-100/70';
                 }
 
                 const subjectBadge = `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${getSubjectColor(subj.id || 1)}">${subj.subject_code || '-'}</span>`;
@@ -514,7 +514,6 @@
             }
         }
 
-        // --- แสดง Modal รายละเอียดงานแบบคอลัมน์ Responsive ---
         function showTaskModal(task) {
             const subj = task.subjects || {};
             const imgs = task.images_data || [];
@@ -534,94 +533,139 @@
             
             const now = new Date().getTime();
             const endTime = new Date(task.end_date).getTime();
-            const diffTime = endTime - now;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.ceil((endTime - now) / (1000 * 60 * 60 * 24));
 
-            let linkSection = task.links ? `
-                <div class="col-span-full space-y-1">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">ลิงก์ / ข้อความเพิ่มเติม</span>
-                    <div class="text-sm"><a href="${task.links}" target="_blank" class="text-blue-600 underline hover:text-blue-800 break-all">${task.links}</a></div>
-                </div>` : '';
-
-            let remarkSection = task.remarks ? `
-                <div class="col-span-full space-y-1">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">หมายเหตุ</span>
-                    <div class="bg-amber-50 text-amber-900 p-3 rounded-xl border border-amber-200 text-sm">${task.remarks}</div>
-                </div>` : '';
-
-            let actionFooter = (currentUser && (userRole === 'admin' || userRole === 'editor')) ? `
-                <div class="col-span-full pt-4 mt-2 border-t border-slate-100 flex justify-end gap-2">
-                    <button onclick="Swal.close(); editTask(${task.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-xl text-xs font-semibold transition"><i class="fas fa-pen mr-1"></i> แก้ไขงาน</button>
-                    <button onclick="Swal.close(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-semibold transition"><i class="fas fa-trash-alt mr-1"></i> ลบงาน</button>
-                </div>` : '';
+            let linkSection = task.links ? `<div class="col-span-full space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">ลิงก์ / ข้อความเพิ่มเติม</span><div class="text-sm"><a href="${task.links}" target="_blank" class="text-blue-600 underline hover:text-blue-800 break-all">${task.links}</a></div></div>` : '';
+            let remarkSection = task.remarks ? `<div class="col-span-full space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">หมายเหตุ</span><div class="bg-amber-50 text-amber-900 p-3 rounded-xl border border-amber-200 text-sm">${task.remarks}</div></div>` : '';
+            let actionFooter = (currentUser && (userRole === 'admin' || userRole === 'editor')) ? `<div class="col-span-full pt-4 mt-2 border-t border-slate-100 flex justify-end gap-2"><button onclick="Swal.close(); editTask(${task.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-xl text-xs font-semibold transition"><i class="fas fa-pen mr-1"></i> แก้ไขงาน</button><button onclick="Swal.close(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-semibold transition"><i class="fas fa-trash-alt mr-1"></i> ลบงาน</button></div>` : '';
 
             Swal.fire({
                 title: `<div class="flex justify-between items-center border-b border-slate-100 pb-3 text-left"><span class="text-xl font-bold text-blue-950">รายละเอียดงาน</span><button onclick="Swal.close()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fas fa-times"></i></button></div>`,
                 html: `
                     <div class="text-left mt-3 max-h-[75vh] overflow-y-auto px-1">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-700">
-                            
-                            <div class="space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">ลำดับที่</span>
-                                <div class="font-bold text-slate-900 text-base">งานที่ ${task.order_num}</div>
-                            </div>
-
-                            <div class="space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รหัสวิชา / ครูผู้สอน</span>
-                                <div class="font-medium text-blue-900 text-sm">${subj.subject_code || ''} (${subj.teacher_name || '-'})</div>
-                            </div>
-
-                            <div class="col-span-full space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">หัวข้อ</span>
-                                <div class="font-bold text-slate-900 text-base">${task.topic}</div>
-                            </div>
-
-                            <div class="col-span-full space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รายละเอียด</span>
-                                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed text-sm">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div>
-                            </div>
-
-                            <div class="space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รูปแบบงาน</span>
-                                <div class="font-medium text-slate-800">${task.work_type}</div>
-                            </div>
-
-                            <div class="space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">เหลือเวลา</span>
-                                <div class="font-semibold text-slate-800">${diffDays > 0 ? diffDays + ' วัน' : 'หมดเวลา'}</div>
-                            </div>
-
-                            <div class="space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">วันที่สั่งงาน</span>
-                                <div class="font-mono text-slate-800 text-xs">${startDateFormatted}</div>
-                            </div>
-
-                            <div class="space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">กำหนดส่ง</span>
-                                <div class="font-mono text-slate-800 text-xs">${endDateFormatted}</div>
-                            </div>
-
+                            <div class="space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">ลำดับที่</span><div class="font-bold text-slate-900 text-base">งานที่ ${task.order_num}</div></div>
+                            <div class="space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รหัสวิชา / ครูผู้สอน</span><div class="font-medium text-blue-900 text-sm">${subj.subject_code || ''} (${subj.teacher_name || '-'})</div></div>
+                            <div class="col-span-full space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">หัวข้อ</span><div class="font-bold text-slate-900 text-base">${task.topic}</div></div>
+                            <div class="col-span-full space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รายละเอียด</span><div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed text-sm">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div></div>
+                            <div class="space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รูปแบบงาน</span><div class="font-medium text-slate-800">${task.work_type}</div></div>
+                            <div class="space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">เหลือเวลา</span><div class="font-semibold text-slate-800">${diffDays > 0 ? diffDays + ' วัน' : 'หมดเวลา'}</div></div>
+                            <div class="space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">วันที่สั่งงาน</span><div class="font-mono text-slate-800 text-xs">${startDateFormatted}</div></div>
+                            <div class="space-y-1"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">กำหนดส่ง</span><div class="font-mono text-slate-800 text-xs">${endDateFormatted}</div></div>
                             ${linkSection}
                             ${remarkSection}
-
-                            ${imgs.length > 0 ? `
-                                <div class="col-span-full space-y-1 pt-2">
-                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รูปภาพประกอบ (คลิกเพื่อเปิดดูขนาดเต็ม)</span>
-                                    ${imgHtml}
-                                </div>
-                            ` : ''}
-
+                            ${imgs.length > 0 ? `<div class="col-span-full space-y-1 pt-2"><span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รูปภาพประกอบ (คลิกเพื่อเปิดดูขนาดเต็ม)</span>${imgHtml}</div>` : ''}
                             ${actionFooter}
                         </div>
                     </div>
                 `,
-                showConfirmButton: false,
-                width: '600px',
-                padding: '1.25rem'
+                showConfirmButton: false, width: '600px', padding: '1.25rem'
             });
         }
 
-        // --- แก้ไขข้อมูลงาน ---
+        // --- ฟังก์ชันยิงแจ้งเตือนตรงไป Telegram จากหน้าเว็บ ---
+        async function sendTelegramDirectly(taskData, subjectInfo, images) {
+            try {
+                const startDateStr = new Date(taskData.start_date).toLocaleDateString('th-TH');
+                const endDateStr = new Date(taskData.end_date).toLocaleDateString('th-TH');
+                const webUrl = window.location.href.split('?')[0];
+
+                let text = "🚨 *มีภาระงานใหม่!*\n" +
+                           "📅 วันที่สั่ง: " + startDateStr + " | งานชิ้นที่: " + taskData.order_num + "\n" +
+                           "📚 รหัสวิชา: " + subjectInfo.subject_code + "\n" +
+                           "📖 ชื่อวิชา: " + subjectInfo.subject_name + "\n" +
+                           "👨‍🏫 ครูผู้สอน: " + subjectInfo.teacher_name + "\n" +
+                           "------------------------------\n" +
+                           "📌 *หัวข้อ:* " + taskData.topic + "\n" +
+                           "📝 *รายละเอียด:* " + (taskData.details || "-") + "\n" +
+                           "👥 *รูปแบบงาน:* " + taskData.work_type + "\n" +
+                           "⏰ *กำหนดส่ง:* " + endDateStr + "\n";
+                           
+                if (taskData.links) text += "📎 *ลิงก์/ข้อความ:* " + taskData.links + "\n";
+                if (taskData.remarks) text += "💡 *หมายเหตุ:* " + taskData.remarks + "\n";
+                text += "------------------------------\n" +
+                        "🌐 [ดูรายละเอียด/เข้าสู่ระบบ](" + webUrl + ")";
+
+                if (!images || images.length === 0) {
+                    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ chat_id: TG_CHAT_ID, text: text, parse_mode: "Markdown", disable_web_page_preview: true })
+                    });
+                } else if (images.length === 1) {
+                    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendPhoto`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ chat_id: TG_CHAT_ID, photo: images[0].lh_url, caption: text, parse_mode: "Markdown" })
+                    });
+                } else {
+                    let media = [];
+                    for (let i = 0; i < images.length; i++) {
+                        let mItem = { type: "photo", media: images[i].lh_url };
+                        if (i === 0) {
+                            mItem.caption = text;
+                            mItem.parse_mode = "Markdown";
+                        }
+                        media.push(mItem);
+                    }
+                    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMediaGroup`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ chat_id: TG_CHAT_ID, media: media })
+                    });
+                }
+            } catch (err) {
+                console.error("Telegram Direct Error: ", err);
+            }
+        }
+
+        // --- SUBMIT / SAVE ASSIGNMENT ---
+        document.getElementById('form-assignment').onsubmit = async (e) => {
+            e.preventDefault(); 
+            const btn = document.getElementById('btn-submit'); 
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
+            
+            try {
+                const newAssign = {
+                    subject_id: document.getElementById('f-subject').value, 
+                    order_num: document.getElementById('f-order').value, 
+                    work_type: document.getElementById('f-type').value,
+                    topic: document.getElementById('f-topic').value, 
+                    details: document.getElementById('f-details').value, 
+                    links: document.getElementById('f-link').value,
+                    remarks: document.getElementById('f-remarks').value,
+                    start_date: document.getElementById('f-start').value,
+                    end_date: document.getElementById('f-end').value, 
+                    images_data: selectedFiles 
+                };
+                
+                const { error: insertError } = await supabaseClient.from('assignments').insert([newAssign]);
+                if (insertError) throw insertError;
+
+                newlyUploadedTempFiles = [];
+
+                // ส่ง Telegram จากหน้าเว็บตรงทันที (ถ้าเปิดใช้งาน)
+                if(document.getElementById('f-notify').checked) {
+                    const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
+                    if(sData) {
+                        sendTelegramDirectly(newAssign, sData, selectedFiles);
+                    }
+                }
+
+                selectedFiles = [];
+                Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' }); 
+                switchView(viewPublic); 
+                fetchAssignments();
+            } catch(err) { 
+                Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+            } finally { 
+                btn.disabled = false; 
+                btn.innerText = 'บันทึกข้อมูล'; 
+            }
+        };
+
+        // --- EDIT TASK ---
         async function editTask(id) {
             const task = globalAssignments.find(t => t.id === id);
             if(!task) return;
@@ -767,7 +811,6 @@
             });
         }
 
-        // --- NAVIGATION & CLEANUP ---
         function switchView(view) { 
             [viewPublic, viewEditor, viewAdmin].forEach(v => v.classList.add('hide')); 
             view.classList.remove('hide'); 
@@ -789,9 +832,7 @@
         document.getElementById('btn-admin').onclick = () => { switchView(viewAdmin); fetchAllTerms(); fetchAppUsers(); };
         document.querySelectorAll('.btn-cancel').forEach(btn => btn.onclick = () => switchView(viewPublic));
 
-        // ==========================================
-        // EDITOR PANEL
-        // ==========================================
+        // --- UPLOAD IMAGES IN EDITOR ---
         const fileInput = document.getElementById('f-images');
         const previewContainer = document.getElementById('image-previews');
         const btnSubmit = document.getElementById('btn-submit');
@@ -857,8 +898,7 @@
             }
 
             const now = new Date(); 
-            const todayStr = now.toISOString().slice(0,10);
-            document.getElementById('f-start').value = todayStr;
+            document.getElementById('f-start').value = now.toISOString().slice(0,10);
             const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             document.getElementById('f-end').value = nextWeek.toISOString().slice(0,10);
 
@@ -894,55 +934,7 @@
             return rawUrl;
         }
 
-        document.getElementById('form-assignment').onsubmit = async (e) => {
-            e.preventDefault(); const btn = document.getElementById('btn-submit'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
-            try {
-                const newAssign = {
-                    subject_id: document.getElementById('f-subject').value, 
-                    order_num: document.getElementById('f-order').value, 
-                    work_type: document.getElementById('f-type').value,
-                    topic: document.getElementById('f-topic').value, 
-                    details: document.getElementById('f-details').value, 
-                    links: document.getElementById('f-link').value,
-                    remarks: document.getElementById('f-remarks').value,
-                    start_date: document.getElementById('f-start').value,
-                    end_date: document.getElementById('f-end').value, 
-                    images_data: selectedFiles 
-                };
-                
-                const { error: insertError } = await supabaseClient.from('assignments').insert([newAssign]);
-                if (insertError) throw insertError;
-
-                newlyUploadedTempFiles = [];
-
-                if(document.getElementById('f-notify').checked) {
-                    const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
-                    if(sData) {
-                        const notifyForm = new URLSearchParams({ action: 'notify', payload: JSON.stringify({
-                            startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'), endDateStr: new Date(newAssign.end_date).toLocaleDateString('th-TH'),
-                            orderNum: newAssign.order_num, subjectCode: sData.subject_code, subjectName: sData.subject_name, teacherName: sData.teacher_name,
-                            topic: newAssign.topic, details: newAssign.details, remarks: newAssign.remarks, workType: newAssign.work_type, images: selectedFiles, remainingText: "ดูเวลาผ่านเว็บ", webUrl: window.location.href.split('?')[0]
-                        })});
-                        fetch(GAS_WEBAPP_URL, { method: 'POST', body: notifyForm }); 
-                    }
-                }
-                selectedFiles = [];
-                Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' }); 
-                switchView(viewPublic); 
-                fetchAssignments();
-            } catch(err) { 
-                Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
-            } finally { 
-                btn.disabled = false; 
-                btn.innerText = 'บันทึกข้อมูล'; 
-            }
-        };
-
-        // ==========================================
-        // ADMIN PANEL
-        // ==========================================
-        
-        // 1. จัดการเทอม
+        // --- ADMIN MANAGEMENT (TERMS, SUBJECTS, USERS) ---
         document.getElementById('form-term').onsubmit = async (e) => {
             e.preventDefault(); const isActive = document.getElementById('f-term-active').checked;
             if(isActive) await supabaseClient.from('terms').update({ is_active: false }).neq('id', 0);
@@ -957,16 +949,13 @@
             if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">ไม่มีข้อมูลเทอม</td></tr>';
 
             let activeTermId = null;
-
             data.forEach(term => {
                 if (term.is_active) activeTermId = term.id;
                 adminSelect.innerHTML += `<option value="${term.id}">เทอม ${term.semester}/${term.academic_year} ${term.is_active ? '(ปัจจุบัน)' : ''}</option>`;
                 const badge = term.is_active ? `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[11px] font-bold"><i class="fas fa-check-circle mr-1"></i>ปัจจุบัน</span>` : `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-[11px]">อดีต</span>`;
                 const actionBtn = term.is_active ? '' : `<button onclick="setTermActive(${term.id})" class="text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded font-medium mr-1.5 transition">ตั้งเป็นปัจจุบัน</button>`;
-
                 tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-blue-50/40 transition"><td class="px-4 py-2 font-semibold">เทอม ${term.semester} / ${term.academic_year}</td><td class="px-4 py-2">${badge}</td><td class="px-4 py-2 text-right">${actionBtn}<button onclick="editTerm(${term.id}, ${term.semester}, ${term.academic_year})" class="text-slate-400 hover:text-blue-600 px-1.5 py-1"><i class="fas fa-pen"></i></button><button onclick="deleteTerm(${term.id})" class="text-red-400 hover:text-red-600 px-1.5 py-1 ml-1"><i class="fas fa-trash"></i></button></td></tr>`);
             });
-
             if (activeTermId) adminSelect.value = activeTermId;
             loadAdminSubjects();
         }
@@ -983,7 +972,6 @@
         }
         async function deleteTerm(id) { if(confirm('ลบเทอมนี้? ข้อมูลวิชาและงานจะหายไปด้วย!')) { await supabaseClient.from('terms').delete().eq('id', id); fetchAllTerms(); } }
 
-        // 2. จัดการวิชา
         document.getElementById('form-add-subject').onsubmit = async (e) => {
             e.preventDefault(); const termId = document.getElementById('admin-term-select').value; if(!termId) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกเทอมก่อน', 'warning');
             await supabaseClient.from('subjects').insert([{ term_id: termId, subject_code: document.getElementById('f-sub-code').value, subject_name: document.getElementById('f-sub-name').value, teacher_name: document.getElementById('f-sub-teacher').value }]);
@@ -1009,11 +997,9 @@
         }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        // 3. จัดการบัญชีผู้ใช้
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Toast.fire({ icon: 'info', title: 'กำลังสร้างบัญชี...' });
-            
             const { data: { session: adminSession } } = await supabaseClient.auth.getSession();
             const user = document.getElementById('f-add-user').value.toLowerCase();
             const pass = document.getElementById('f-add-pass').value;
@@ -1021,24 +1007,16 @@
             
             const { data, error } = await supabaseClient.auth.signUp({ email: user + DOMAIN_SUFFIX, password: pass });
             if(error) { Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); return; }
-            
-            if (data.user) {
-                await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: role, username: user }]);
-            }
-            
-            if (adminSession) {
-                await supabaseClient.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token });
-            }
+            if (data.user) { await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: role, username: user }]); }
+            if (adminSession) { await supabaseClient.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token }); }
             
             Toast.fire({ icon: 'success', title: 'สร้างบัญชีสำเร็จ' });
-            e.target.reset(); 
-            fetchAppUsers();
+            e.target.reset(); fetchAppUsers();
         };
 
         async function fetchAppUsers() {
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">กำลังโหลด...</td></tr>';
-            
             const { data } = await supabaseClient.from('users_role').select('*').order('role');
             tbody.innerHTML = '';
             if (!data) return;
@@ -1047,37 +1025,17 @@
                 const isAdmin = user.role === 'admin';
                 const badge = isAdmin ? '<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[11px] font-bold"><i class="fas fa-shield-alt mr-1"></i>Admin</span>' : '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[11px] font-medium"><i class="fas fa-edit mr-1"></i>Editor</span>';
                 const name = user.username || '-';
-                
                 const isSelf = currentUser && currentUser.id === user.user_id;
-                const actionBtns = isSelf
-                    ? `<span class="text-xs text-slate-400 italic"><i class="fas fa-lock mr-1"></i> บัญชีของคุณเอง</span>`
-                    : `<button onclick="editAppUser('${user.user_id}', '${name}', '${user.role}')" class="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded font-medium transition mr-1"><i class="fas fa-pen mr-1"></i> แก้ไข</button>
-                       <button onclick="deleteAppUser('${user.user_id}', '${name}')" class="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded font-medium transition"><i class="fas fa-trash mr-1"></i> ลบ</button>`;
+                const actionBtns = isSelf ? `<span class="text-xs text-slate-400 italic"><i class="fas fa-lock mr-1"></i> บัญชีของคุณเอง</span>` : `<button onclick="editAppUser('${user.user_id}', '${name}', '${user.role}')" class="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded font-medium transition mr-1"><i class="fas fa-pen mr-1"></i> แก้ไข</button><button onclick="deleteAppUser('${user.user_id}', '${name}')" class="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded font-medium transition"><i class="fas fa-trash mr-1"></i> ลบ</button>`;
 
-                tbody.insertAdjacentHTML('beforeend', `
-                    <tr class="hover:bg-blue-50/40 transition">
-                        <td class="px-4 py-2 font-semibold flex items-center"><i class="fas fa-user-circle text-slate-300 mr-2 text-base"></i>${name}</td>
-                        <td class="px-4 py-2">${badge}</td>
-                        <td class="px-4 py-2 text-right">${actionBtns}</td>
-                    </tr>
-                `);
+                tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-blue-50/40 transition"><td class="px-4 py-2 font-semibold flex items-center"><i class="fas fa-user-circle text-slate-300 mr-2 text-base"></i>${name}</td><td class="px-4 py-2">${badge}</td><td class="px-4 py-2 text-right">${actionBtns}</td></tr>`);
             });
         }
 
         async function editAppUser(uid, currentName, currentRole) {
             const { value: formValues } = await Swal.fire({
                 title: '<span class="text-blue-800 font-bold">แก้ไขข้อมูลผู้ใช้</span>',
-                html: `
-                    <div class="text-left space-y-3 mt-3 text-xs">
-                        <div><label class="font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full text-xs lowercase" value="${currentName}"></div>
-                        <div><label class="font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label>
-                            <select id="eu-role" class="w-full text-xs">
-                                <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option>
-                                <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option>
-                            </select>
-                        </div>
-                    </div>
-                `,
+                html: `<div class="text-left space-y-3 mt-3 text-xs"><div><label class="font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full text-xs lowercase" value="${currentName}"></div><div><label class="font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label><select id="eu-role" class="w-full text-xs"><option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option><option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option></select></div></div>`,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
                 preConfirm: () => {
                     const n = document.getElementById('eu-name').value.trim().toLowerCase();
@@ -1086,7 +1044,6 @@
                     return { username: n, role: r }
                 }
             });
-
             if (formValues) {
                 Toast.fire({ icon: 'info', title: 'กำลังบันทึก...' });
                 await supabaseClient.from('users_role').update({ username: formValues.username, role: formValues.role }).eq('user_id', uid);
