@@ -443,7 +443,7 @@
             Toast.fire({ icon: 'success', title: 'ออกจากระบบเรียบร้อย' });
         };
 
-        // --- PUBLIC VIEW (ตารางรวมภาระงาน พร้อมตัวกรองรายวิชา) ---
+        // --- PUBLIC VIEW ---
         async function fetchAssignments() {
             document.getElementById('loading-tasks').classList.remove('hide');
             const { data, error } = await supabaseClient.from('assignments').select(`*, subjects ( id, subject_code, subject_name, teacher_name, terms ( academic_year, semester, is_active ) )`);
@@ -452,7 +452,9 @@
             
             globalAssignments = data.filter(item => item.subjects?.terms?.is_active);
             
-            // ดึงรายวิชาสำหรับตัวกรอง
+            // เรียงงานล่าสุดขึ้นบนสุดตาม created_at หรือ id หรือ start_date
+            globalAssignments.sort((a, b) => new Date(b.start_date || b.created_at || 0) - new Date(a.start_date || a.created_at || 0));
+
             const filterSelect = document.getElementById('filter-subject');
             const activeTerm = globalAssignments.length > 0 ? globalAssignments[0].subjects.terms : null;
             
@@ -674,7 +676,6 @@
             const sel = document.getElementById('f-subject'); sel.innerHTML = '<option value="">-- เลือกรหัสวิชา --</option>';
             subjects?.forEach(s => sel.innerHTML += `<option value="${s.id}">${s.subject_code} - ${s.subject_name}</option>`);
 
-            // คำนวณลำดับงานแบบนับรวมทุกวิชาอัตโนมัติ
             const { data: allAssigns } = await supabaseClient.from('assignments').select('order_num');
             if (allAssigns && allAssigns.length > 0) {
                 const maxOrder = Math.max(...allAssigns.map(a => Number(a.order_num) || 0));
@@ -726,7 +727,7 @@
                     links: document.getElementById('f-link').value,
                     start_date: document.getElementById('f-start').value,
                     end_date: document.getElementById('f-end').value, 
-                    images_data: imgs
+                    images_data: imgs // บันทึกเป็น JSONB array ใน Supabase อย่างถูกต้อง
                 };
                 await supabaseClient.from('assignments').insert([newAssign]);
 
