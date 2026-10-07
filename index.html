@@ -701,51 +701,74 @@
             return rawUrl;
         }
 
-        document.getElementById('form-assignment').onsubmit = async (e) => {
-            e.preventDefault(); const btn = document.getElementById('btn-submit'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
+document.getElementById('form-assignment').onsubmit = async (e) => {
+            e.preventDefault(); 
+            const btn = document.getElementById('btn-submit'); 
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
+            
             try {
                 let imgs = [];
+                // 1. อัปโหลดรูปภาพผ่าน GAS ถ้ามีไฟล์เลือกไว้
                 if(selectedFiles.length > 0) {
                     const base64Files = await Promise.all(selectedFiles.map(getBase64));
                     const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
                     const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
                     if(res.status === 'success') {
-                        imgs = res.data.map(img => ({
-                            file_id: img.file_id,
-                            name: img.name,
-                            lh_url: convertDriveLink(img.lh_url)
-                        }));
+                        imgs = res.data; // รับข้อมูล [{ file_id, lh_url }] ที่แปลงเป็น lh5 มาเรียบร้อยแล้ว
                     }
                 }
 
+                // 2. จัดเตรียมข้อมูลสำหรับบันทึกลง Supabase
                 const newAssign = {
                     subject_id: document.getElementById('f-subject').value, 
                     order_num: document.getElementById('f-order').value, 
                     work_type: document.getElementById('f-type').value,
                     topic: document.getElementById('f-topic').value, 
                     details: document.getElementById('f-details').value, 
-                    links: document.getElementById('f-link').value,
+                    links: document.getElementById('f-link').value, // บันทึกลงคอลัมน์ links
                     start_date: document.getElementById('f-start').value,
                     end_date: document.getElementById('f-end').value, 
-                    images_data: imgs // ส่งข้อมูลรูปภาพเป็น JSON Array ไปยัง Supabase
+                    images_data: imgs // บันทึกลงคอลัมน์ images_data (ชนิด jsonb)
                 };
-                await supabaseClient.from('assignments').insert([newAssign]);
 
+                // 3. บันทึกลงฐานข้อมูล Supabase
+                const { error: dbError } = await supabaseClient.from('assignments').insert([newAssign]);
+                if (dbError) throw dbError;
+
+                // 4. ส่งแจ้งเตือน Telegram (ถ้าติ๊กเลือกไว้)
                 if(document.getElementById('f-notify').checked) {
                     const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
                     if(sData) {
                         const notifyForm = new URLSearchParams({ action: 'notify', payload: JSON.stringify({
-                            startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'), endDateStr: `${new Date(newAssign.end_date).toLocaleDateString('th-TH')} ${new Date(newAssign.end_date).toLocaleTimeString('th-TH').slice(0,5)} น.`,
-                            orderNum: newAssign.order_num, subjectCode: sData.subject_code, subjectName: sData.subject_name, teacherName: sData.teacher_name,
-                            topic: newAssign.topic, details: newAssign.details, workType: newAssign.work_type, images: imgs, remainingText: "ดูเวลาผ่านเว็บ", webUrl: window.location.href.split('?')[0]
+                            startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'), 
+                            endDateStr: `${new Date(newAssign.end_date).toLocaleDateString('th-TH')} ${new Date(newAssign.end_date).toLocaleTimeString('th-TH').slice(0,5)} น.`,
+                            orderNum: newAssign.order_num, 
+                            subjectCode: sData.subject_code, 
+                            subjectName: sData.subject_name, 
+                            teacherName: sData.teacher_name,
+                            topic: newAssign.topic, 
+                            details: newAssign.details, 
+                            links: newAssign.links,
+                            workType: newAssign.work_type, 
+                            images: imgs, 
+                            remainingText: "ดูเวลาผ่านเว็บ", 
+                            webUrl: window.location.href.split('?')[0]
                         })});
                         fetch(GAS_WEBAPP_URL, { method: 'POST', body: notifyForm }); 
                     }
                 }
+
                 Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' }); 
                 switchView(viewPublic); 
                 fetchAssignments();
-            } catch(err) { Toast.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด' }); } finally { btn.disabled = false; btn.innerText = 'บันทึกข้อมูล'; }
+            } catch(err) { 
+                console.error(err);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้: ' + err.message, 'error');
+            } finally { 
+                btn.disabled = false; 
+                btn.innerText = 'บันทึกข้อมูล'; 
+            }
         };
 
         // ==========================================
