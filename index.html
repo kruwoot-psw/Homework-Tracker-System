@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการภาระงาน (Homework Tracker)</title>
+    <title>ระบบ Homework Tracker R02</title>
     
     <!-- CSS / Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -71,7 +71,7 @@
             <div class="flex justify-between h-14 items-center">
                 <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchView(viewPublic)">
                     <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-8 w-auto object-contain rounded-md">
-                    <span class="text-lg tracking-wide text-blue-900 font-bold">HW Tracker</span>
+                    <span class="text-lg tracking-wide text-blue-900 font-bold">HW Tracker R02</span>
                 </div>
                 <div class="flex items-center space-x-2 text-sm">
                     <span id="user-display" class="text-blue-700 font-medium hidden sm:inline-block bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 text-xs"></span>
@@ -81,7 +81,7 @@
                     <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการ</button>
                     <button id="btn-show-add" class="hide btn-primary px-3 py-1.5 font-medium text-xs shadow-sm"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
                     <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition">ออกจากระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -94,9 +94,6 @@
         <div id="view-public" class="space-y-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <h1 class="text-xl text-blue-950 font-bold"><i class="fas fa-list-alt text-blue-500 mr-1.5"></i>ตารางสรุปภาระงานทั้งหมด</h1>
-                <button onclick="fetchAssignments()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1.5">
-                    <i class="fas fa-sync-alt text-blue-500"></i> รีเฟรชข้อมูล
-                </button>
             </div>
 
             <!-- ช่องค้นหาและตัวกรอง -->
@@ -116,52 +113,11 @@
                 <i class="fas fa-circle-notch fa-spin text-2xl text-blue-400"></i>
             </div>
 
-            <!-- 1. ใกล้กำหนดส่ง -->
-            <div class="bg-white border border-orange-200 shadow-sm rounded-xl p-3.5">
-                <h2 class="text-sm font-bold text-orange-700 mb-2 flex items-center"><i class="fas fa-exclamation-triangle mr-1.5"></i> ใกล้กำหนดส่ง (ภายใน 2 วัน)</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left text-slate-700">
-                        <thead class="bg-orange-50 text-orange-900 uppercase font-bold">
-                            <tr>
-                                <th class="w-16">ลำดับ</th>
-                                <th>วิชา</th>
-                                <th>หัวข้อชิ้นงาน</th>
-                                <th>ครูผู้สอน</th>
-                                <th>กำหนดส่ง</th>
-                                <th class="text-right">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-urgent" class="divide-y divide-orange-100"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 2. ยังไม่หมดเวลา -->
-            <div class="bg-white border border-blue-200 shadow-sm rounded-xl p-3.5">
-                <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center"><i class="fas fa-clock mr-1.5"></i> งานที่กำลังดำเนินการ</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left text-slate-700">
-                        <thead class="bg-blue-50 text-blue-900 uppercase font-bold">
-                            <tr>
-                                <th class="w-16">ลำดับ</th>
-                                <th>วิชา</th>
-                                <th>หัวข้อชิ้นงาน</th>
-                                <th>ครูผู้สอน</th>
-                                <th>กำหนดส่ง</th>
-                                <th class="text-right">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-active" class="divide-y divide-blue-100"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 3. หมดเวลาแล้ว -->
+            <!-- ตารางภาระงาน (ตารางเดียว จัดสีพาสเทลตามสถานะ) -->
             <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-3.5">
-                <h2 class="text-sm font-bold text-slate-600 mb-2 flex items-center"><i class="fas fa-check-circle mr-1.5"></i> งานที่หมดเวลาส่งแล้ว</h2>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left text-slate-600">
-                        <thead class="bg-slate-100 text-slate-700 uppercase font-bold">
+                    <table class="w-full text-xs text-left text-slate-700">
+                        <thead class="bg-slate-100 text-slate-800 uppercase font-bold">
                             <tr>
                                 <th class="w-16">ลำดับ</th>
                                 <th>วิชา</th>
@@ -171,7 +127,7 @@
                                 <th class="text-right">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="table-expired" class="divide-y divide-slate-100"></tbody>
+                        <tbody id="table-all-assignments" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
@@ -233,12 +189,12 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block font-semibold text-blue-800 mb-1">วันเวลาสั่งงาน</label>
-                            <input type="datetime-local" id="f-start" required class="w-full text-sm">
+                            <label class="block font-semibold text-blue-800 mb-1">วันที่สั่งงาน</label>
+                            <input type="date" id="f-start" required class="w-full text-sm">
                         </div>
                         <div>
-                            <label class="block font-semibold text-blue-800 mb-1">วันเวลากำหนดส่ง</label>
-                            <input type="datetime-local" id="f-end" required class="w-full text-sm">
+                            <label class="block font-semibold text-blue-800 mb-1">วันที่กำหนดส่ง</label>
+                            <input type="date" id="f-end" required class="w-full text-sm">
                         </div>
                     </div>
 
@@ -338,7 +294,7 @@
     </main>
 
     <footer class="text-center py-4 text-blue-500 text-xs mt-auto border-t border-blue-50">
-        HW Tracker © 2026 | ระบบจัดการภาระงานโรงเรียน
+        HW Tracker © 2026 | Homework-Tracker-System
     </footer>
 
     <script>
@@ -421,7 +377,7 @@
                 html: `
                     <div class="flex flex-col gap-4 text-left mt-2 px-1">
                         <div><label class="block text-sm font-semibold text-blue-700 mb-1">Username</label><input id="swal-user" type="text" class="w-full" placeholder="กรอกชื่อผู้ใช้"></div>
-                        <div class="relative"><label class="block text-sm font-semibold text-blue-700 mb-1">Password</label><input id="swal-pass" type="password" class="w-full pr-10" placeholder="กรอกรหัสผ่าน"><button type="button" id="toggle-pass" class="absolute right-3 top-[34px] text-gray-400 hover:text-blue-600 p-1"><i class="fas fa-eye"></i></button></div>
+                        <div class="relative"><label class="block text-sm font-semibold text-blue-700 mb-1">Password</label><div class="relative flex items-center"><input id="swal-pass" type="password" class="w-full pr-10" placeholder="กรอกรหัสผ่าน"><button type="button" id="toggle-pass" class="absolute right-3 text-gray-400 hover:text-blue-600 p-1 flex items-center justify-center"><i class="fas fa-eye"></i></button></div></div>
                     </div>
                 `,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'เข้าสู่ระบบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
@@ -510,15 +466,10 @@
             const searchText = document.getElementById('search-input').value.toLowerCase();
             const filterSubjId = document.getElementById('filter-subject').value;
 
-            const tableUrgent = document.getElementById('table-urgent');
-            const tableActive = document.getElementById('table-active');
-            const tableExpired = document.getElementById('table-expired');
+            const tableContainer = document.getElementById('table-all-assignments');
+            tableContainer.innerHTML = '';
 
-            tableUrgent.innerHTML = '';
-            tableActive.innerHTML = '';
-            tableExpired.innerHTML = '';
-
-            let urgentCount = 0, activeCount = 0, expiredCount = 0;
+            let count = 0;
 
             globalAssignments.forEach(task => {
                 const subj = task.subjects || {};
@@ -529,17 +480,26 @@
                 const endTime = new Date(task.end_date).getTime();
                 const diffHours = (endTime - now) / (1000 * 60 * 60);
                 
+                // กำหนดสีพื้นหลังพาสเทลตามเงื่อนไข
+                let rowBgClass = '';
+                if (endTime < now) {
+                    rowBgClass = 'bg-slate-100/70 text-slate-500'; // เลยเวลา -> สีเทาอ่อน
+                } else if (diffHours <= 48 && diffHours > 0) {
+                    rowBgClass = 'bg-red-50/70'; // ใกล้กำหนดส่ง -> สีแดงพาสเทลอ่อน
+                }
+
                 const subjectBadge = `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${getSubjectColor(subj.id || 1)}">${subj.subject_code || '-'}</span>`;
-                const dateStr = new Date(task.end_date).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+                // แสดงเฉพาะ วดป (ตัดเวลาออก)
+                const dateStr = new Date(task.end_date).toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
                 
                 const actionBtn = (currentUser && (userRole === 'admin' || userRole === 'editor')) ? `
                     <div class="flex justify-end gap-1">
-                        <button onclick="event.stopPropagation(); editTask(${task.id})" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 w-7 h-7 rounded-md flex items-center justify-center transition" title="แก้ไข"><i class="fas fa-pen text-[11px]"></i></button>
-                        <button onclick="event.stopPropagation(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 w-7 h-7 rounded-md flex items-center justify-center transition" title="ลบ"><i class="fas fa-trash-alt text-[11px]"></i></button>
+                        <button onclick="event.stopPropagation(); editTask(${task.id})" class="text-blue-500 hover:text-blue-700 bg-white/80 hover:bg-blue-50 w-7 h-7 rounded-md flex items-center justify-center transition shadow-sm" title="แก้ไข"><i class="fas fa-pen text-[11px]"></i></button>
+                        <button onclick="event.stopPropagation(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="text-red-400 hover:text-red-600 bg-white/80 hover:bg-red-50 w-7 h-7 rounded-md flex items-center justify-center transition shadow-sm" title="ลบ"><i class="fas fa-trash-alt text-[11px]"></i></button>
                     </div>` : `<span class="text-[11px] text-slate-400">คลิกดู</span>`;
 
-                const rowHtml = `
-                    <tr class="hover:bg-blue-50/50 transition cursor-pointer" onclick='showTaskModal(${JSON.stringify(task).replace(/'/g, "&apos;")})'>
+                tableContainer.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-blue-50/40 transition cursor-pointer ${rowBgClass}" onclick='showTaskModal(${JSON.stringify(task).replace(/'/g, "&apos;")})'>
                         <td class="px-3 py-2 font-bold text-slate-600">งานที่ ${task.order_num}</td>
                         <td class="px-3 py-2 font-medium">${subjectBadge}</td>
                         <td class="px-3 py-2 font-semibold text-slate-900">${task.topic}</td>
@@ -547,26 +507,16 @@
                         <td class="px-3 py-2 font-mono text-[11px]">${dateStr}</td>
                         <td class="px-3 py-2 text-right">${actionBtn}</td>
                     </tr>
-                `;
-
-                if (endTime < now) {
-                    tableExpired.insertAdjacentHTML('beforeend', rowHtml);
-                    expiredCount++;
-                } else if (diffHours <= 48 && diffHours > 0) {
-                    tableUrgent.insertAdjacentHTML('beforeend', rowHtml);
-                    urgentCount++;
-                } else {
-                    tableActive.insertAdjacentHTML('beforeend', rowHtml);
-                    activeCount++;
-                }
+                `);
+                count++;
             });
 
-            if(urgentCount === 0) tableUrgent.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-slate-400 text-xs">ไม่มีงานใกล้กำหนดส่ง</td></tr>`;
-            if(activeCount === 0) tableActive.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-slate-400 text-xs">ไม่มีงานที่กำลังดำเนินการ</td></tr>`;
-            if(expiredCount === 0) tableExpired.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-slate-400 text-xs">ไม่มีงานที่หมดเวลาแล้ว</td></tr>`;
+            if(count === 0) {
+                tableContainer.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-400 text-xs">ไม่มีรายการภาระงาน</td></tr>`;
+            }
         }
 
-        // --- แสดง Modal รายละเอียดงานแบบคอลัมน์ Responsive (ตามภาพตัวอย่าง) ---
+        // --- แสดง Modal รายละเอียดงานแบบหลายคอลัมน์ (Responsive) ตัดสถานะออก ---
         function showTaskModal(task) {
             const subj = task.subjects || {};
             const imgs = task.images_data || [];
@@ -576,7 +526,7 @@
                 imgHtml = `<div class="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">`;
                 imgs.forEach(img => {
                     const imageUrl = convertDriveLink(img.lh_url);
-                    imgHtml += `<div class="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 aspect-square flex items-center justify-center cursor-pointer hover:opacity-90 transition" onclick="window.open('${imageUrl}', '_blank')" title="คลิกเพื่อเปิดรูปขนาดเต็ม"><img src="${imageUrl}" class="w-full h-full object-cover"></div>`;
+                    imgHtml += `<div class="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 aspect-square flex items-center justify-center cursor-pointer hover:opacity-90 transition shadow-sm" onclick="window.open('${imageUrl}', '_blank')" title="คลิกเพื่อเปิดรูปขนาดเต็ม"><img src="${imageUrl}" class="w-full h-full object-cover"></div>`;
                 });
                 imgHtml += `</div>`;
             }
@@ -644,12 +594,12 @@
                             </div>
 
                             <div class="space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">วันที่เริ่มต้น</span>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">วันที่สั่งงาน</span>
                                 <div class="font-mono text-slate-800 text-xs">${startDateFormatted}</div>
                             </div>
 
                             <div class="space-y-1">
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">วันที่สิ้นสุด</span>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">กำหนดส่ง</span>
                                 <div class="font-mono text-slate-800 text-xs">${endDateFormatted}</div>
                             </div>
 
@@ -658,7 +608,7 @@
 
                             ${imgs.length > 0 ? `
                                 <div class="col-span-full space-y-1 pt-2">
-                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รูปภาพประกอบ (คลิกรูปเพื่อเปิดดูขนาดเต็ม)</span>
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รูปภาพประกอบ (คลิกเพื่อเปิดดูขนาดเต็ม)</span>
                                     ${imgHtml}
                                 </div>
                             ` : ''}
@@ -693,8 +643,8 @@
                             <div><label class="font-semibold text-slate-700 mb-1 block">หมายเหตุ</label><input type="text" id="edit-remarks" class="w-full text-xs" value="${task.remarks || ''}"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <div><label class="font-semibold text-slate-700 mb-1 block">วันสั่งงาน</label><input type="datetime-local" id="edit-start" class="w-full text-xs" value="${task.start_date.slice(0,16)}"></div>
-                            <div><label class="font-semibold text-slate-700 mb-1 block">กำหนดส่ง</label><input type="datetime-local" id="edit-end" class="w-full text-xs" value="${task.end_date.slice(0,16)}"></div>
+                            <div><label class="font-semibold text-slate-700 mb-1 block">วันที่สั่งงาน</label><input type="date" id="edit-start" class="w-full text-xs" value="${task.start_date.slice(0,10)}"></div>
+                            <div><label class="font-semibold text-slate-700 mb-1 block">วันที่กำหนดส่ง</label><input type="date" id="edit-end" class="w-full text-xs" value="${task.end_date.slice(0,10)}"></div>
                         </div>
                         <div>
                             <label class="font-semibold text-slate-700 mb-1 block">รูปภาพเดิม (คลิก X เพื่อลบ)</label>
@@ -898,7 +848,11 @@
                 document.getElementById('order-badge').innerText = 'นับรวมอัตโนมัติ';
             }
 
-            const now = new Date(); document.getElementById('f-start').value = now.toISOString().slice(0,16); now.setDate(now.getDate() + 7); document.getElementById('f-end').value = now.toISOString().slice(0,16);
+            const now = new Date(); 
+            const todayStr = now.toISOString().slice(0,10);
+            document.getElementById('f-start').value = todayStr;
+            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            document.getElementById('f-end').value = nextWeek.toISOString().slice(0,10);
 
             const { data: term } = await supabaseClient.from('terms').select('*').eq('is_active', true).single();
             if(!term) return Swal.fire('ข้อผิดพลาด', 'ยังไม่มีการตั้งค่าเทอมปัจจุบัน กรุณาแจ้ง Admin', 'error');
@@ -957,7 +911,7 @@
                     const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
                     if(sData) {
                         const notifyForm = new URLSearchParams({ action: 'notify', payload: JSON.stringify({
-                            startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'), endDateStr: `${new Date(newAssign.end_date).toLocaleDateString('th-TH')} ${new Date(newAssign.end_date).toLocaleTimeString('th-TH').slice(0,5)} น.`,
+                            startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'), endDateStr: new Date(newAssign.end_date).toLocaleDateString('th-TH'),
                             orderNum: newAssign.order_num, subjectCode: sData.subject_code, subjectName: sData.subject_name, teacherName: sData.teacher_name,
                             topic: newAssign.topic, details: newAssign.details, remarks: newAssign.remarks, workType: newAssign.work_type, images: selectedFiles, remainingText: "ดูเวลาผ่านเว็บ", webUrl: window.location.href.split('?')[0]
                         })});
