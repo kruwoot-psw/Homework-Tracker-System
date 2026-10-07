@@ -308,7 +308,7 @@
         
         const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw0f_Nd6T2IX38JLLyCviq4MklmBodQfgacdSeucdYZZhj90GaUdpL3ndKfKj4CYfGn/exec';
         
-        // Telegram Config สำหรับยิงตรงจากหน้าเว็บ (ตัดปัญหา 400 Bad Request ด้วย Plain Text)
+        // Telegram Config (ปลอดภัยจาก Status 400 ด้วย Plain Text)
         const TG_BOT_TOKEN = "7980580329:AAHNgBjCdxlowQFzxn8PnFrqJ7xpszGdO2o";
         const TG_CHAT_ID = "-4516821489";
 
@@ -563,7 +563,7 @@
             });
         }
 
-        // --- ฟังก์ชันยิงตรงไป Telegram ป้องกัน Status 400 ด้วยการส่งแบบ Plain Text ---
+        // --- ฟังก์ชันยิงตรงไป Telegram ป้องกัน Status 400 ด้วย Plain Text ---
         async function sendTelegramDirectly(taskData, subjectInfo, images) {
             try {
                 const startDateStr = new Date(taskData.start_date).toLocaleDateString('th-TH');
