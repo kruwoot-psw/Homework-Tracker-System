@@ -97,11 +97,11 @@
                 </button>
             </div>
 
-            <!-- ช่องค้นหาและตัวกรอง -->
+            <!-- ช่องค้นหาและตัวกรอง (ย้ายแว่นขยายไปไว้ท้ายกล่อง) -->
             <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-sm flex flex-col sm:flex-row gap-2.5">
                 <div class="flex-grow relative flex items-center">
-                    <i class="fas fa-search absolute left-3 text-slate-400 pointer-events-none"></i>
-                    <input type="text" id="search-input" oninput="renderAssignmentsTable()" placeholder="ค้นหาหัวข้อชิ้นงาน หรือครูผู้สอน..." class="w-full pl-9 pr-3 py-1.5 text-sm">
+                    <input type="text" id="search-input" oninput="renderAssignmentsTable()" placeholder="ค้นหาหัวข้อชิ้นงาน หรือครูผู้สอน..." class="w-full pl-3 pr-9 py-1.5 text-sm">
+                    <i class="fas fa-search absolute right-3 text-slate-400 pointer-events-none"></i>
                 </div>
                 <div class="sm:w-56">
                     <select id="filter-subject" onchange="renderAssignmentsTable()" class="w-full bg-white text-sm py-1.5">
@@ -346,7 +346,7 @@
         const DOMAIN_SUFFIX = '@hw.local'; 
 
         let currentUser = null, userRole = null, globalAssignments = [], globalSubjects = [];
-        let selectedFiles = [], editExistingImages = [], editNewUploadedFiles = [], newlyUploadedTempFiles = []; 
+        let selectedFiles = [], editExistingImages = [], editNewUploadedFiles = [], newlyUploadedTempFiles = [], imagesToDeleteOnSave = []; 
         
         const escapeQuote = str => str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
@@ -560,47 +560,69 @@
             if(expiredCount === 0) tableExpired.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-slate-400 text-xs">ไม่มีงานที่หมดเวลาแล้ว</td></tr>`;
         }
 
-        // แสดง Modal รายละเอียดงานครบทุกข้อมูลพร้อมรูปภาพ
+        // แสดง Modal รายละเอียดงาน รูปภาพแบบเต็มไม่ครอป พร้อมคลิกขยายใหญ่
         function showTaskModal(task) {
             const subj = task.subjects || {};
             const imgs = task.images_data || [];
             let imgHtml = '';
             
             if (imgs.length > 0) {
-                imgHtml = `<div class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2.5">`;
+                imgHtml = `<div class="mt-3 space-y-2">`;
                 imgs.forEach(img => {
                     const imageUrl = convertDriveLink(img.lh_url);
-                    imgHtml += `<img src="${imageUrl}" class="w-full h-24 object-cover rounded-lg border border-slate-200 cursor-pointer shadow-sm hover:opacity-95 transition" onclick="window.open('${imageUrl}')">`;
+                    imgHtml += `<div class="rounded-xl overflow-hidden border border-slate-200 bg-black/5 flex justify-center"><img src="${imageUrl}" class="w-full max-h-[350px] object-contain cursor-pointer hover:opacity-95 transition" onclick="openFullImage('${imageUrl}')"></div>`;
                 });
                 imgHtml += `</div>`;
             }
 
-            let linkHtml = task.links ? `<div class="mt-2 text-sm"><b>ลิงก์/ข้อความเพิ่มเติม:</b> <a href="${task.links}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${task.links}</a></div>` : '';
-            let remarkHtml = task.remarks ? `<div class="mt-2 text-sm bg-amber-50 text-amber-800 p-2.5 rounded-xl border border-amber-200"><b>หมายเหตุ:</b> ${task.remarks}</div>` : '';
+            let linkHtml = task.links ? `<div class="text-sm"><b>ลิงก์/ข้อความ:</b> <a href="${task.links}" target="_blank" class="text-blue-600 underline hover:text-blue-800 break-all">${task.links}</a></div>` : '';
+            let remarkHtml = task.remarks ? `<div class="text-sm bg-amber-50 text-amber-800 p-3 rounded-xl border border-amber-200"><b>หมายเหตุ:</b> ${task.remarks}</div>` : '';
 
             Swal.fire({
                 title: `<span class="text-blue-900 font-bold text-lg">${task.topic}</span>`,
                 html: `
-                    <div class="text-left space-y-2.5 mt-1 text-sm text-slate-700">
+                    <div class="text-left space-y-3 mt-1 text-sm text-slate-700">
                         <div class="flex gap-2 flex-wrap">
                             <span class="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-md font-bold text-xs">${subj.subject_code || ''} ${subj.subject_name || ''}</span>
                             <span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md font-medium text-xs">${task.work_type}</span>
                             <span class="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-md text-xs">งานที่ ${task.order_num}</span>
                         </div>
                         <p class="text-blue-600 font-medium text-xs"><i class="fas fa-user-tie mr-1"></i> ครูผู้สอน: ${subj.teacher_name || '-'}</p>
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed text-xs">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div>
+                        
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-400 uppercase">รายละเอียด</label>
+                            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed text-xs">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div>
+                        </div>
+
                         ${linkHtml}
                         ${remarkHtml}
-                        <div class="text-[11px] text-slate-500 space-y-0.5 pt-1">
+                        
+                        <div class="text-[11px] text-slate-500 space-y-0.5 pt-1 border-t border-slate-100">
                             <p><i class="fas fa-calendar-alt text-blue-500 mr-1"></i> วันสั่งงาน: ${new Date(task.start_date).toLocaleString('th-TH')}</p>
                             <p><i class="fas fa-clock text-orange-500 mr-1"></i> กำหนดส่ง: ${new Date(task.end_date).toLocaleString('th-TH')}</p>
                         </div>
+                        
                         ${imgHtml}
                     </div>
                 `,
-                width: '550px',
+                width: '600px',
                 confirmButtonText: 'ปิดหน้าต่าง',
                 confirmButtonColor: '#3b82f6'
+            });
+        }
+
+        // ฟังก์ชันแสดงรูปภาพขนาดใหญ่เต็มจอพร้อมปุ่มกากบาทปิด
+        function openFullImage(url) {
+            Swal.fire({
+                html: `
+                    <div class="relative">
+                        <img src="${url}" class="w-full max-h-[80vh] object-contain rounded-lg">
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCloseButton: true,
+                width: '85vw',
+                padding: '1rem'
             });
         }
 
@@ -611,7 +633,7 @@
 
             editExistingImages = task.images_data ? [...task.images_data] : [];
             editNewUploadedFiles = [];
-            let imagesToDeleteOnSave = [];
+            imagesToDeleteOnSave = [];
 
             const { value: formValues } = await Swal.fire({
                 title: '<span class="text-blue-800 font-bold text-lg">แก้ไขข้อมูลภาระงาน</span>',
@@ -651,7 +673,7 @@
                                 res.data.forEach(img => {
                                     const fileObj = { file_id: img.file_id, name: img.name, lh_url: convertDriveLink(img.lh_url) };
                                     editNewUploadedFiles.push(fileObj);
-                                    newlyUploadedTempFiles.push(fileObj); // เก็บไว้ลบกรณี Cancel
+                                    newlyUploadedTempFiles.push(fileObj);
                                 });
                                 renderEditNewPreviews();
                             }
@@ -659,7 +681,7 @@
                     });
                 },
                 preConfirm: () => {
-                    // ลบไฟล์ที่ถูกกดกากบาทออกจาก Drive จริงๆ ตอนกดบันทึก
+                    // ลบไฟล์ออกจาก Google Drive จริงๆ เมื่อกดบันทึก
                     imagesToDeleteOnSave.forEach(fileId => {
                         fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: fileId }) }).catch(()=>{});
                     });
@@ -677,14 +699,12 @@
             });
 
             if (formValues) {
-                // บันทึกสำเร็จ เคลียร์ตัวแปรไฟล์ชั่วคราว
                 newlyUploadedTempFiles = [];
                 Swal.fire({title: 'กำลังบันทึกการแก้ไข...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
                 await supabaseClient.from('assignments').update(formValues).eq('id', id);
                 Toast.fire({ icon: 'success', title: 'อัปเดตข้อมูลสำเร็จ' });
                 fetchAssignments();
             } else {
-                // กรณีกด Cancel ให้ลบไฟล์ใหม่ที่เพิ่งอัปโหลดทิ้งออกจาก Drive ทันที
                 newlyUploadedTempFiles.forEach(img => {
                     fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: img.file_id }) }).catch(()=>{});
                 });
@@ -709,9 +729,7 @@
         window.removeEditExistingImage = function(idx) {
             const removed = editExistingImages.splice(idx, 1);
             if(removed[0] && removed[0].file_id) {
-                // เก็บไฟล์ ID ไว้ลบเมื่อกดยืนยันบันทึก
-                window.imagesToDeleteOnSave = window.imagesToDeleteOnSave || [];
-                window.imagesToDeleteOnSave.push(removed[0].file_id);
+                imagesToDeleteOnSave.push(removed[0].file_id);
             }
             renderEditExistingImages();
         }
@@ -733,7 +751,6 @@
         window.removeEditNewImage = function(idx) {
             const removed = editNewUploadedFiles.splice(idx, 1);
             if(removed[0] && removed[0].file_id) {
-                // ลบออกจาก Drive ทันทีที่กดกากบาท
                 fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: removed[0].file_id }) }).catch(()=>{});
             }
             renderEditNewPreviews();
@@ -755,21 +772,17 @@
 
         // --- NAVIGATION & CLEANUP ---
         function switchView(view) { 
-            // ถ้าย้ายออกจากหน้า Editor และมีไฟล์ค้างอยู่ใน temp ให้ลบออก
-            if(view !== viewEditor && selectedFiles.length > 0) {
-                selectedFiles.forEach(f => {
-                    // กรณีไฟล์ยังไม่อัปโหลด แค่เคลียร์อาเรย์
-                });
-            }
             [viewPublic, viewEditor, viewAdmin].forEach(v => v.classList.add('hide')); 
             view.classList.remove('hide'); 
             window.scrollTo({top: 0, behavior: 'smooth'}); 
         }
 
         async function handleCancelEditor() {
-            if(selectedFiles.length > 0) {
-                // ถ้าอัปโหลดขึ้น Drive ไปแล้วระหว่างเลือก แต่ยังไม่กดบันทึก ให้เคลียร์ไฟล์ใน Drive
-                // (ในระบบนี้เลือกไฟล์แล้วจะอัปโหลดตอนกด submit ดังนั้นแค่เคลียร์อาเรย์ตัวอย่างก็เพียงพอ)
+            if(newlyUploadedTempFiles.length > 0) {
+                newlyUploadedTempFiles.forEach(img => {
+                    fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: img.file_id }) }).catch(()=>{});
+                });
+                newlyUploadedTempFiles = [];
             }
             selectedFiles = [];
             switchView(viewPublic);
@@ -892,7 +905,7 @@
                 const { error: insertError } = await supabaseClient.from('assignments').insert([newAssign]);
                 if (insertError) throw insertError;
 
-                newlyUploadedTempFiles = []; // บันทึกสำเร็จ ไม่ต้องลบไฟล์ทิ้ง
+                newlyUploadedTempFiles = [];
 
                 if(document.getElementById('f-notify').checked) {
                     const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
