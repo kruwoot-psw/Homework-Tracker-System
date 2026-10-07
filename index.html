@@ -56,7 +56,6 @@
         }
         .preview-remove-btn:hover { background-color: #dc2626; }
 
-        /* ปรับตารางให้กระชับ สบายตา ไม่เว้นระยะเยอะ */
         table th, table td {
             padding: 8px 12px !important;
         }
@@ -80,7 +79,7 @@
                     <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการ</button>
                     <button id="btn-show-add" class="hide btn-primary px-3 py-1.5 font-medium text-xs shadow-sm"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
                     <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -98,7 +97,7 @@
                 </button>
             </div>
 
-            <!-- ช่องค้นหาและตัวกรอง (แก้ปัญหาไอคอนซ้อนกับข้อความ) -->
+            <!-- ช่องค้นหาและตัวกรอง -->
             <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-sm flex flex-col sm:flex-row gap-2.5">
                 <div class="flex-grow relative flex items-center">
                     <i class="fas fa-search absolute left-3 text-slate-400 pointer-events-none"></i>
@@ -181,7 +180,7 @@
             <div class="bg-white border border-blue-100 shadow-lg rounded-2xl p-6">
                 <div class="flex justify-between items-center mb-5 border-b border-blue-50 pb-3">
                     <h2 class="text-lg font-bold text-blue-900"><i class="fas fa-edit text-blue-500 mr-2"></i> สั่งภาระงานใหม่</h2>
-                    <button class="btn-cancel text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-lg"></i></button>
+                    <button class="btn-cancel text-gray-400 hover:text-red-500 transition" onclick="handleCancelEditor()"><i class="fas fa-times text-lg"></i></button>
                 </div>
                 <form id="form-assignment" class="space-y-4 text-sm">
                     <div>
@@ -320,7 +319,7 @@
                 <div class="overflow-x-auto border border-blue-100 rounded-xl">
                     <table class="w-full text-xs text-left text-slate-700">
                         <thead class="bg-blue-50 text-blue-800 uppercase font-bold">
-                            <tr><th class="px-4 py-2.5">บัญชีผู้ใช้ (Username)</th><th class="px-4 py-2.5">ระดับสิทธิ์</th><th class="px-4 py-2.5 text-right">การจัดการ</th></tr>
+                            <tr><th class="px-4 py-2.5">บัญชีผู้ใช้ (Username)</th><th class="px-4 py-2.5">ระดับสิทธิ์</th><th class="px-4 py-2.5 text-right">จัดการ</th></tr>
                         </thead>
                         <tbody id="users-table-body" class="divide-y divide-blue-50"></tbody>
                     </table>
@@ -347,7 +346,7 @@
         const DOMAIN_SUFFIX = '@hw.local'; 
 
         let currentUser = null, userRole = null, globalAssignments = [], globalSubjects = [];
-        let selectedFiles = [], editExistingImages = []; 
+        let selectedFiles = [], editExistingImages = [], editNewUploadedFiles = [], newlyUploadedTempFiles = []; 
         
         const escapeQuote = str => str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
@@ -611,7 +610,8 @@
             if(!task) return;
 
             editExistingImages = task.images_data ? [...task.images_data] : [];
-            let newUploadedFiles = [];
+            editNewUploadedFiles = [];
+            let imagesToDeleteOnSave = [];
 
             const { value: formValues } = await Swal.fire({
                 title: '<span class="text-blue-800 font-bold text-lg">แก้ไขข้อมูลภาระงาน</span>',
@@ -646,17 +646,24 @@
                         if(files.length > 0) {
                             const base64Files = await Promise.all(files.map(getBase64));
                             const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
-                            const res = await (await (fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd }))).json();
+                            const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
                             if(res.status === 'success') {
                                 res.data.forEach(img => {
-                                    newUploadedFiles.push({ file_id: img.file_id, name: img.name, lh_url: convertDriveLink(img.lh_url) });
+                                    const fileObj = { file_id: img.file_id, name: img.name, lh_url: convertDriveLink(img.lh_url) };
+                                    editNewUploadedFiles.push(fileObj);
+                                    newlyUploadedTempFiles.push(fileObj); // เก็บไว้ลบกรณี Cancel
                                 });
-                                renderEditNewPreviews(newUploadedFiles);
+                                renderEditNewPreviews();
                             }
                         }
                     });
                 },
                 preConfirm: () => {
+                    // ลบไฟล์ที่ถูกกดกากบาทออกจาก Drive จริงๆ ตอนกดบันทึก
+                    imagesToDeleteOnSave.forEach(fileId => {
+                        fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: fileId }) }).catch(()=>{});
+                    });
+
                     const topic = document.getElementById('edit-topic').value;
                     const details = document.getElementById('edit-details').value;
                     const links = document.getElementById('edit-link').value;
@@ -664,16 +671,24 @@
                     const start_date = document.getElementById('edit-start').value;
                     const end_date = document.getElementById('edit-end').value;
                     
-                    const finalImages = [...editExistingImages, ...newUploadedFiles];
+                    const finalImages = [...editExistingImages, ...editNewUploadedFiles];
                     return { topic, details, links, remarks, start_date, end_date, images_data: finalImages };
                 }
             });
 
             if (formValues) {
+                // บันทึกสำเร็จ เคลียร์ตัวแปรไฟล์ชั่วคราว
+                newlyUploadedTempFiles = [];
                 Swal.fire({title: 'กำลังบันทึกการแก้ไข...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
                 await supabaseClient.from('assignments').update(formValues).eq('id', id);
                 Toast.fire({ icon: 'success', title: 'อัปเดตข้อมูลสำเร็จ' });
                 fetchAssignments();
+            } else {
+                // กรณีกด Cancel ให้ลบไฟล์ใหม่ที่เพิ่งอัปโหลดทิ้งออกจาก Drive ทันที
+                newlyUploadedTempFiles.forEach(img => {
+                    fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: img.file_id }) }).catch(()=>{});
+                });
+                newlyUploadedTempFiles = [];
             }
         }
 
@@ -692,21 +707,36 @@
         }
 
         window.removeEditExistingImage = function(idx) {
-            editExistingImages.splice(idx, 1);
+            const removed = editExistingImages.splice(idx, 1);
+            if(removed[0] && removed[0].file_id) {
+                // เก็บไฟล์ ID ไว้ลบเมื่อกดยืนยันบันทึก
+                window.imagesToDeleteOnSave = window.imagesToDeleteOnSave || [];
+                window.imagesToDeleteOnSave.push(removed[0].file_id);
+            }
             renderEditExistingImages();
         }
 
-        window.renderEditNewPreviews = function(filesList) {
+        window.renderEditNewPreviews = function() {
             const container = document.getElementById('edit-new-previews');
             if(!container) return;
             container.innerHTML = '';
-            filesList.forEach((img, idx) => {
+            editNewUploadedFiles.forEach((img, idx) => {
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-blue-300 shadow-sm">
+                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-blue-300 shadow-sm" id="new-img-${idx}">
                         <img src="${convertDriveLink(img.lh_url)}" class="w-full h-full object-cover">
+                        <div onclick="removeEditNewImage(${idx})" class="preview-remove-btn"><i class="fas fa-times"></i></div>
                     </div>
                 `);
             });
+        }
+
+        window.removeEditNewImage = function(idx) {
+            const removed = editNewUploadedFiles.splice(idx, 1);
+            if(removed[0] && removed[0].file_id) {
+                // ลบออกจาก Drive ทันทีที่กดกากบาท
+                fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: removed[0].file_id }) }).catch(()=>{});
+            }
+            renderEditNewPreviews();
         }
 
         async function deleteTask(id, imagesDataStr) {
@@ -723,8 +753,28 @@
             });
         }
 
-        // --- NAVIGATION ---
-        function switchView(view) { [viewPublic, viewEditor, viewAdmin].forEach(v => v.classList.add('hide')); view.classList.remove('hide'); window.scrollTo({top: 0, behavior: 'smooth'}); }
+        // --- NAVIGATION & CLEANUP ---
+        function switchView(view) { 
+            // ถ้าย้ายออกจากหน้า Editor และมีไฟล์ค้างอยู่ใน temp ให้ลบออก
+            if(view !== viewEditor && selectedFiles.length > 0) {
+                selectedFiles.forEach(f => {
+                    // กรณีไฟล์ยังไม่อัปโหลด แค่เคลียร์อาเรย์
+                });
+            }
+            [viewPublic, viewEditor, viewAdmin].forEach(v => v.classList.add('hide')); 
+            view.classList.remove('hide'); 
+            window.scrollTo({top: 0, behavior: 'smooth'}); 
+        }
+
+        async function handleCancelEditor() {
+            if(selectedFiles.length > 0) {
+                // ถ้าอัปโหลดขึ้น Drive ไปแล้วระหว่างเลือก แต่ยังไม่กดบันทึก ให้เคลียร์ไฟล์ใน Drive
+                // (ในระบบนี้เลือกไฟล์แล้วจะอัปโหลดตอนกด submit ดังนั้นแค่เคลียร์อาเรย์ตัวอย่างก็เพียงพอ)
+            }
+            selectedFiles = [];
+            switchView(viewPublic);
+        }
+
         document.getElementById('btn-show-add').onclick = () => { switchView(viewEditor); initEditorForm(); };
         document.getElementById('btn-admin').onclick = () => { switchView(viewAdmin); fetchAllTerms(); fetchAppUsers(); };
         document.querySelectorAll('.btn-cancel').forEach(btn => btn.onclick = () => switchView(viewPublic));
@@ -735,19 +785,43 @@
         const fileInput = document.getElementById('f-images');
         const previewContainer = document.getElementById('image-previews');
         
-        fileInput.addEventListener('change', (e) => {
-            selectedFiles = selectedFiles.concat(Array.from(e.target.files));
-            renderPreviews(); fileInput.value = ''; 
+        fileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if(files.length > 0) {
+                const base64Files = await Promise.all(files.map(getBase64));
+                const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
+                const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
+                if(res.status === 'success') {
+                    res.data.forEach(img => {
+                        const fileObj = { file_id: img.file_id, name: img.name, lh_url: convertDriveLink(img.lh_url) };
+                        selectedFiles.push(fileObj);
+                        newlyUploadedTempFiles.push(fileObj);
+                    });
+                    renderPreviews();
+                }
+            }
+            fileInput.value = ''; 
         });
 
         function renderPreviews() {
             previewContainer.innerHTML = '';
-            selectedFiles.forEach((file, index) => {
-                const url = URL.createObjectURL(file);
-                previewContainer.insertAdjacentHTML('beforeend', `<div class="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 shadow-sm"><img src="${url}" class="w-full h-full object-cover"><div onclick="removeImage(${index})" class="preview-remove-btn"><i class="fas fa-times"></i></div></div>`);
+            selectedFiles.forEach((img, index) => {
+                previewContainer.insertAdjacentHTML('beforeend', `
+                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 shadow-sm" id="preview-box-${index}">
+                        <img src="${img.lh_url}" class="w-full h-full object-cover">
+                        <div onclick="removeEditorImage(${index})" class="preview-remove-btn"><i class="fas fa-times"></i></div>
+                    </div>
+                `);
             });
         }
-        function removeImage(index) { selectedFiles.splice(index, 1); renderPreviews(); }
+
+        window.removeEditorImage = function(index) {
+            const removed = selectedFiles.splice(index, 1);
+            if(removed[0] && removed[0].file_id) {
+                fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: removed[0].file_id }) }).catch(()=>{});
+            }
+            renderPreviews();
+        }
 
         async function initEditorForm() {
             document.getElementById('form-assignment').reset(); selectedFiles = []; renderPreviews(); 
@@ -802,20 +876,6 @@
         document.getElementById('form-assignment').onsubmit = async (e) => {
             e.preventDefault(); const btn = document.getElementById('btn-submit'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
             try {
-                let imgs = [];
-                if(selectedFiles.length > 0) {
-                    const base64Files = await Promise.all(selectedFiles.map(getBase64));
-                    const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
-                    const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
-                    if(res.status === 'success') {
-                        imgs = res.data.map(img => ({
-                            file_id: img.file_id,
-                            name: img.name,
-                            lh_url: convertDriveLink(img.lh_url)
-                        }));
-                    }
-                }
-
                 const newAssign = {
                     subject_id: document.getElementById('f-subject').value, 
                     order_num: document.getElementById('f-order').value, 
@@ -826,11 +886,13 @@
                     remarks: document.getElementById('f-remarks').value,
                     start_date: document.getElementById('f-start').value,
                     end_date: document.getElementById('f-end').value, 
-                    images_data: imgs 
+                    images_data: selectedFiles 
                 };
                 
                 const { error: insertError } = await supabaseClient.from('assignments').insert([newAssign]);
                 if (insertError) throw insertError;
+
+                newlyUploadedTempFiles = []; // บันทึกสำเร็จ ไม่ต้องลบไฟล์ทิ้ง
 
                 if(document.getElementById('f-notify').checked) {
                     const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
@@ -838,11 +900,12 @@
                         const notifyForm = new URLSearchParams({ action: 'notify', payload: JSON.stringify({
                             startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'), endDateStr: `${new Date(newAssign.end_date).toLocaleDateString('th-TH')} ${new Date(newAssign.end_date).toLocaleTimeString('th-TH').slice(0,5)} น.`,
                             orderNum: newAssign.order_num, subjectCode: sData.subject_code, subjectName: sData.subject_name, teacherName: sData.teacher_name,
-                            topic: newAssign.topic, details: newAssign.details, remarks: newAssign.remarks, workType: newAssign.work_type, images: imgs, remainingText: "ดูเวลาผ่านเว็บ", webUrl: window.location.href.split('?')[0]
+                            topic: newAssign.topic, details: newAssign.details, remarks: newAssign.remarks, workType: newAssign.work_type, images: selectedFiles, remainingText: "ดูเวลาผ่านเว็บ", webUrl: window.location.href.split('?')[0]
                         })});
                         fetch(GAS_WEBAPP_URL, { method: 'POST', body: notifyForm }); 
                     }
                 }
+                selectedFiles = [];
                 Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' }); 
                 switchView(viewPublic); 
                 fetchAssignments();
@@ -891,7 +954,7 @@
         async function editTerm(id, sem, year) { 
             const { value: form } = await Swal.fire({ 
                 title: '<span class="text-blue-800 font-bold">แก้ไขเทอม</span>', 
-                html: `<div class="space-y-3 mt-2"><input id="e-sem" class="w-full text-sm" placeholder="เทอม" value="${sem}"><input id="e-year" class="w-full text-sm" placeholder="ปีการศึกษา" value="${year}"></div>`, 
+                html: `<div class="space-y-3 mt-2 text-left"><label class="text-xs font-semibold text-slate-700">เทอม</label><input id="e-sem" class="w-full text-sm" value="${sem}"><label class="text-xs font-semibold text-slate-700">ปีการศึกษา</label><input id="e-year" class="w-full text-sm" value="${year}"></div>`, 
                 showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
                 preConfirm: () => ({ sem: document.getElementById('e-sem').value, year: document.getElementById('e-year').value }) 
             }); 
@@ -917,7 +980,7 @@
         async function editSubject(id, code, name, teacher) { 
             const { value: form } = await Swal.fire({ 
                 title: '<span class="text-blue-800 font-bold">แก้ไขรายวิชา</span>', 
-                html: `<div class="space-y-3 mt-2"><input id="e-sub-code" class="w-full text-sm" placeholder="รหัสวิชา" value="${code}"><input id="e-sub-name" class="w-full text-sm" placeholder="ชื่อวิชา" value="${name}"><input id="e-sub-teacher" class="w-full text-sm" placeholder="ครูผู้สอน" value="${teacher}"></div>`, 
+                html: `<div class="space-y-3 mt-2 text-left"><label class="text-xs font-semibold text-slate-700">รหัสวิชา</label><input id="e-sub-code" class="w-full text-sm" value="${code}"><label class="text-xs font-semibold text-slate-700">ชื่อวิชา</label><input id="e-sub-name" class="w-full text-sm" value="${name}"><label class="text-xs font-semibold text-slate-700">ครูผู้สอน</label><input id="e-sub-teacher" class="w-full text-sm" value="${teacher}"></div>`, 
                 showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
                 preConfirm: () => ({ code: document.getElementById('e-sub-code').value, name: document.getElementById('e-sub-name').value, teacher: document.getElementById('e-sub-teacher').value }) 
             }); 
