@@ -18,16 +18,16 @@
         
         body { 
             font-family: 'Sarabun', sans-serif; 
-            background-color: #f0f9ff; 
+            background-color: #f8fafc; 
             color: #1e293b; 
-            font-size: 16px;
+            font-size: 15px;
         }
         .hide { display: none !important; }
         
         input, select, textarea { 
             border: 1px solid #cbd5e1 !important; 
-            border-radius: 10px !important;
-            padding: 8px 12px !important;
+            border-radius: 8px !important;
+            padding: 6px 10px !important;
             background-color: #ffffff;
             transition: all 0.2s ease-in-out;
         }
@@ -40,22 +40,26 @@
         .btn-primary { 
             background-color: #3b82f6; 
             color: white; 
-            border-radius: 10px; 
+            border-radius: 8px; 
             transition: all 0.2s;
         }
         .btn-primary:hover { 
             background-color: #2563eb; 
-            transform: translateY(-1px);
         }
         
-        .swal2-popup { border-radius: 16px !important; font-family: 'Sarabun', sans-serif !important; }
+        .swal2-popup { border-radius: 14px !important; font-family: 'Sarabun', sans-serif !important; }
         
         .preview-remove-btn {
-            position: absolute; top: -6px; right: -6px; background-color: #ef4444; color: white;
-            border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
-            font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s;
+            position: absolute; top: -5px; right: -5px; background-color: #ef4444; color: white;
+            border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s;
         }
         .preview-remove-btn:hover { background-color: #dc2626; }
+
+        /* ปรับตารางให้กระชับ สบายตา ไม่เว้นระยะเยอะ */
+        table th, table td {
+            padding: 8px 12px !important;
+        }
 
         h1, h2, h3, nav span { font-weight: 600; }
     </style>
@@ -63,62 +67,67 @@
 <body class="antialiased min-h-screen flex flex-col">
 
     <!-- Navbar -->
-    <nav class="bg-white border-b border-blue-100 shadow-sm sticky top-0 z-50">
+    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-3 cursor-pointer" onclick="switchView(viewPublic)">
-                    <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-10 w-auto object-contain drop-shadow-sm rounded-md">
-                    <span class="text-xl tracking-wide text-blue-900 font-bold">HW Tracker</span>
+            <div class="flex justify-between h-14 items-center">
+                <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchView(viewPublic)">
+                    <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-8 w-auto object-contain rounded-md">
+                    <span class="text-lg tracking-wide text-blue-900 font-bold">HW Tracker</span>
                 </div>
-                <div class="flex items-center space-x-2 sm:space-x-3 text-sm">
-                    <span id="user-display" class="text-blue-700 font-medium hidden sm:inline-block bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"></span>
-                    <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการระบบ</button>
-                    <button id="btn-show-add" class="hide btn-primary px-4 py-2 font-medium shadow-sm shadow-blue-200 transition"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
-                    <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
+                <div class="flex items-center space-x-2 text-sm">
+                    <span id="user-display" class="text-blue-700 font-medium hidden sm:inline-block bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 text-xs"></span>
+                    <button onclick="fetchAssignments()" class="text-slate-600 hover:text-blue-600 p-2 rounded-lg transition" title="รีเฟรชข้อมูล"><i class="fas fa-sync-alt"></i></button>
+                    <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการ</button>
+                    <button id="btn-show-add" class="hide btn-primary px-3 py-1.5 font-medium text-xs shadow-sm"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
+                    <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 space-y-5">
         
         <!-- PUBLIC VIEW -->
-        <div id="view-public" class="space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
-                <h1 class="text-2xl text-blue-950 font-bold"><i class="fas fa-list-alt text-blue-500 mr-2"></i>ตารางสรุปภาระงานทั้งหมด</h1>
+        <div id="view-public" class="space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <h1 class="text-xl text-blue-950 font-bold"><i class="fas fa-list-alt text-blue-500 mr-1.5"></i>ตารางสรุปภาระงานทั้งหมด</h1>
+                <button onclick="fetchAssignments()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1.5">
+                    <i class="fas fa-sync-alt text-blue-500"></i> รีเฟรชข้อมูล
+                </button>
             </div>
 
-            <!-- ช่องค้นหาและตัวกรอง -->
-            <div class="bg-white border border-blue-100 p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-3">
-                <div class="flex-grow relative">
-                    <i class="fas fa-search absolute left-3.5 top-3.5 text-gray-400"></i>
-                    <input type="text" id="search-input" oninput="renderAssignmentsTable()" placeholder="ค้นหาจากหัวข้อชิ้นงาน หรือครูผู้สอน..." class="w-full pl-10">
+            <!-- ช่องค้นหาและตัวกรอง (แก้ปัญหาไอคอนซ้อนกับข้อความ) -->
+            <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-sm flex flex-col sm:flex-row gap-2.5">
+                <div class="flex-grow relative flex items-center">
+                    <i class="fas fa-search absolute left-3 text-slate-400 pointer-events-none"></i>
+                    <input type="text" id="search-input" oninput="renderAssignmentsTable()" placeholder="ค้นหาหัวข้อชิ้นงาน หรือครูผู้สอน..." class="w-full pl-9 pr-3 py-1.5 text-sm">
                 </div>
-                <div class="sm:w-64">
-                    <select id="filter-subject" onchange="renderAssignmentsTable()" class="w-full bg-white">
-                        <option value="">-- แสดงทุกรายวิชา --</option>
+                <div class="sm:w-56">
+                    <select id="filter-subject" onchange="renderAssignmentsTable()" class="w-full bg-white text-sm py-1.5">
+                        <option value="">-- ทุกรายวิชา --</option>
                     </select>
                 </div>
             </div>
             
-            <div id="loading-tasks" class="text-center py-12 hide">
-                <i class="fas fa-circle-notch fa-spin text-3xl text-blue-400"></i>
+            <div id="loading-tasks" class="text-center py-8 hide">
+                <i class="fas fa-circle-notch fa-spin text-2xl text-blue-400"></i>
             </div>
 
             <!-- 1. ใกล้กำหนดส่ง -->
-            <div class="bg-white border border-orange-200 shadow-sm rounded-2xl p-5">
-                <h2 class="text-lg font-bold text-orange-700 mb-3 flex items-center"><i class="fas fa-exclamation-triangle mr-2"></i> ใกล้กำหนดส่ง (ภายใน 2 วัน)</h2>
+            <div class="bg-white border border-orange-200 shadow-sm rounded-xl p-3.5">
+                <h2 class="text-sm font-bold text-orange-700 mb-2 flex items-center"><i class="fas fa-exclamation-triangle mr-1.5"></i> ใกล้กำหนดส่ง (ภายใน 2 วัน)</h2>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-slate-700">
-                        <thead class="bg-orange-50 text-orange-900 text-xs uppercase font-bold">
+                    <table class="w-full text-xs text-left text-slate-700">
+                        <thead class="bg-orange-50 text-orange-900 uppercase font-bold">
                             <tr>
-                                <th class="px-4 py-3">วิชา</th>
-                                <th class="px-4 py-3">หัวข้อชิ้นงาน</th>
-                                <th class="px-4 py-3">ครูผู้สอน</th>
-                                <th class="px-4 py-3">กำหนดส่ง</th>
-                                <th class="px-4 py-3 text-right">จัดการ</th>
+                                <th class="w-16">ลำดับ</th>
+                                <th>วิชา</th>
+                                <th>หัวข้อชิ้นงาน</th>
+                                <th>ครูผู้สอน</th>
+                                <th>กำหนดส่ง</th>
+                                <th class="text-right">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="table-urgent" class="divide-y divide-orange-100"></tbody>
@@ -127,17 +136,18 @@
             </div>
 
             <!-- 2. ยังไม่หมดเวลา -->
-            <div class="bg-white border border-blue-200 shadow-sm rounded-2xl p-5">
-                <h2 class="text-lg font-bold text-blue-800 mb-3 flex items-center"><i class="fas fa-clock mr-2"></i> งานที่กำลังดำเนินการ (ยังไม่หมดเวลา)</h2>
+            <div class="bg-white border border-blue-200 shadow-sm rounded-xl p-3.5">
+                <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center"><i class="fas fa-clock mr-1.5"></i> งานที่กำลังดำเนินการ</h2>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-slate-700">
-                        <thead class="bg-blue-50 text-blue-900 text-xs uppercase font-bold">
+                    <table class="w-full text-xs text-left text-slate-700">
+                        <thead class="bg-blue-50 text-blue-900 uppercase font-bold">
                             <tr>
-                                <th class="px-4 py-3">วิชา</th>
-                                <th class="px-4 py-3">หัวข้อชิ้นงาน</th>
-                                <th class="px-4 py-3">ครูผู้สอน</th>
-                                <th class="px-4 py-3">กำหนดส่ง</th>
-                                <th class="px-4 py-3 text-right">จัดการ</th>
+                                <th class="w-16">ลำดับ</th>
+                                <th>วิชา</th>
+                                <th>หัวข้อชิ้นงาน</th>
+                                <th>ครูผู้สอน</th>
+                                <th>กำหนดส่ง</th>
+                                <th class="text-right">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="table-active" class="divide-y divide-blue-100"></tbody>
@@ -146,17 +156,18 @@
             </div>
 
             <!-- 3. หมดเวลาแล้ว -->
-            <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
-                <h2 class="text-lg font-bold text-slate-700 mb-3 flex items-center"><i class="fas fa-check-circle mr-2"></i> งานที่หมดเวลาส่งแล้ว</h2>
+            <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-3.5">
+                <h2 class="text-sm font-bold text-slate-600 mb-2 flex items-center"><i class="fas fa-check-circle mr-1.5"></i> งานที่หมดเวลาส่งแล้ว</h2>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-slate-600">
-                        <thead class="bg-slate-100 text-slate-700 text-xs uppercase font-bold">
+                    <table class="w-full text-xs text-left text-slate-600">
+                        <thead class="bg-slate-100 text-slate-700 uppercase font-bold">
                             <tr>
-                                <th class="px-4 py-3">วิชา</th>
-                                <th class="px-4 py-3">หัวข้อชิ้นงาน</th>
-                                <th class="px-4 py-3">ครูผู้สอน</th>
-                                <th class="px-4 py-3">กำหนดส่ง</th>
-                                <th class="px-4 py-3 text-right">จัดการ</th>
+                                <th class="w-16">ลำดับ</th>
+                                <th>วิชา</th>
+                                <th>หัวข้อชิ้นงาน</th>
+                                <th>ครูผู้สอน</th>
+                                <th>กำหนดส่ง</th>
+                                <th class="text-right">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="table-expired" class="divide-y divide-slate-100"></tbody>
@@ -167,28 +178,28 @@
 
         <!-- EDITOR VIEW (หน้าสั่งงาน) -->
         <div id="view-editor" class="hide max-w-2xl mx-auto">
-            <div class="bg-white border border-blue-100 shadow-lg shadow-blue-50/50 rounded-2xl p-6 sm:p-8">
-                <div class="flex justify-between items-center mb-6 border-b border-blue-50 pb-4">
-                    <h2 class="text-xl font-bold text-blue-900"><i class="fas fa-edit text-blue-500 mr-2"></i> สั่งภาระงานใหม่</h2>
-                    <button class="btn-cancel text-gray-400 hover:text-red-500 transition p-2"><i class="fas fa-times text-xl"></i></button>
+            <div class="bg-white border border-blue-100 shadow-lg rounded-2xl p-6">
+                <div class="flex justify-between items-center mb-5 border-b border-blue-50 pb-3">
+                    <h2 class="text-lg font-bold text-blue-900"><i class="fas fa-edit text-blue-500 mr-2"></i> สั่งภาระงานใหม่</h2>
+                    <button class="btn-cancel text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-lg"></i></button>
                 </div>
-                <form id="form-assignment" class="space-y-5">
+                <form id="form-assignment" class="space-y-4 text-sm">
                     <div>
-                        <label class="block text-sm font-semibold text-blue-800 mb-1.5">เลือกวิชา (เฉพาะเทอมปัจจุบัน)</label>
-                        <select id="f-subject" required class="w-full bg-blue-50/35"></select>
+                        <label class="block font-semibold text-blue-800 mb-1">เลือกวิชา (เฉพาะเทอมปัจจุบัน)</label>
+                        <select id="f-subject" required class="w-full bg-blue-50/30 text-sm"></select>
                     </div>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div class="sm:col-span-1 relative">
-                            <label class="block text-sm font-semibold text-blue-800 mb-1.5 flex justify-between items-center">
+                            <label class="block font-semibold text-blue-800 mb-1 flex justify-between items-center">
                                 <span>ลำดับงาน</span>
-                                <span id="order-badge" class="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-normal">นับรวมอัตโนมัติ</span>
+                                <span id="order-badge" class="text-[10px] text-blue-600 bg-blue-50 px-1 py-0.5 rounded">อัตโนมัติ</span>
                             </label>
-                            <input type="number" id="f-order" required readonly class="w-full bg-gray-100 text-gray-600 font-bold cursor-not-allowed">
+                            <input type="number" id="f-order" required readonly class="w-full bg-gray-100 text-gray-600 font-bold cursor-not-allowed text-sm">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-sm font-semibold text-blue-800 mb-1.5">รูปแบบงาน</label>
-                            <select id="f-type" required class="w-full">
+                            <label class="block font-semibold text-blue-800 mb-1">รูปแบบงาน</label>
+                            <select id="f-type" required class="w-full text-sm">
                                 <option value="งานเดี่ยว">งานเดี่ยว</option>
                                 <option value="งานกลุ่ม">งานกลุ่ม</option>
                             </select>
@@ -196,73 +207,74 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-blue-800 mb-1.5">หัวข้อ / ชื่อชิ้นงาน</label>
-                        <input type="text" id="f-topic" required class="w-full" placeholder="เช่น รายงานบทที่ 1 เรื่อง...">
+                        <label class="block font-semibold text-blue-800 mb-1">หัวข้อ / ชื่อชิ้นงาน</label>
+                        <input type="text" id="f-topic" required class="w-full text-sm" placeholder="เช่น รายงานบทที่ 1 เรื่อง...">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-blue-800 mb-1.5">รายละเอียดเพิ่มเติม</label>
-                        <textarea id="f-details" rows="3" class="w-full" placeholder="ระบุรายละเอียดงาน คำชี้แจง..."></textarea>
+                        <label class="block font-semibold text-blue-800 mb-1">รายละเอียดเพิ่มเติม</label>
+                        <textarea id="f-details" rows="2" class="w-full text-sm" placeholder="ระบุรายละเอียดงาน คำชี้แจง..."></textarea>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-blue-800 mb-1.5">ลิงก์ / ข้อความเพิ่มเติม (ถ้ามี)</label>
-                        <input type="text" id="f-link" class="w-full" placeholder="วางลิงก์หรือข้อความธรรมดาได้ที่นี่">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-blue-800 mb-1.5">หมายเหตุ (ถ้ามี)</label>
-                        <input type="text" id="f-remarks" class="w-full" placeholder="เช่น ส่งภายในคาบเรียนเท่านั้น">
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm font-semibold text-blue-800 mb-1.5">วันเวลาสั่งงาน</label>
-                            <input type="datetime-local" id="f-start" required class="w-full">
+                            <label class="block font-semibold text-blue-800 mb-1">ลิงก์ / ข้อความเพิ่มเติม</label>
+                            <input type="text" id="f-link" class="w-full text-sm" placeholder="วางลิงก์หรือข้อความ">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-blue-800 mb-1.5">วันเวลากำหนดส่ง</label>
-                            <input type="datetime-local" id="f-end" required class="w-full">
+                            <label class="block font-semibold text-blue-800 mb-1">หมายเหตุ</label>
+                            <input type="text" id="f-remarks" class="w-full text-sm" placeholder="เช่น ส่งภายในคาบ">
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-blue-800 mb-1.5">รูปภาพแนบ (เลือกได้หลายรูป)</label>
-                        <input type="file" id="f-images" multiple accept="image/*" class="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:border-0 file:rounded-lg file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition cursor-pointer">
-                        <div id="image-previews" class="flex flex-wrap gap-3 mt-3"></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-blue-800 mb-1">วันเวลาสั่งงาน</label>
+                            <input type="datetime-local" id="f-start" required class="w-full text-sm">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-blue-800 mb-1">วันเวลากำหนดส่ง</label>
+                            <input type="datetime-local" id="f-end" required class="w-full text-sm">
+                        </div>
                     </div>
 
-                    <div class="pt-4 border-t border-blue-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <label class="flex items-center text-sm text-slate-700 cursor-pointer font-medium bg-blue-50/70 px-4 py-2.5 rounded-xl border border-blue-100 w-full sm:w-auto">
-                            <input type="checkbox" id="f-notify" checked class="mr-2.5 text-blue-600 rounded focus:ring-blue-500 w-4 h-4">
-                            <i class="fab fa-telegram text-blue-500 mr-1.5 text-lg"></i> แจ้งเตือนเข้า Telegram
+                    <div>
+                        <label class="block font-semibold text-blue-800 mb-1">รูปภาพแนบ (เลือกได้หลายรูป)</label>
+                        <input type="file" id="f-images" multiple accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:border-0 file:rounded-lg file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition cursor-pointer">
+                        <div id="image-previews" class="flex flex-wrap gap-2.5 mt-2.5"></div>
+                    </div>
+
+                    <div class="pt-3 border-t border-blue-50 flex flex-col sm:flex-row justify-between items-center gap-3">
+                        <label class="flex items-center text-xs text-slate-700 cursor-pointer font-medium bg-blue-50/70 px-3 py-2 rounded-xl border border-blue-100 w-full sm:w-auto">
+                            <input type="checkbox" id="f-notify" checked class="mr-2 text-blue-600 rounded w-4 h-4">
+                            <i class="fab fa-telegram text-blue-500 mr-1 text-base"></i> แจ้งเตือน Telegram
                         </label>
-                        <button type="submit" id="btn-submit" class="btn-primary py-2.5 px-8 font-semibold shadow-md w-full sm:w-auto">บันทึกข้อมูล</button>
+                        <button type="submit" id="btn-submit" class="btn-primary py-2 px-6 font-semibold shadow-md text-sm w-full sm:w-auto">บันทึกข้อมูล</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- ADMIN VIEW -->
-        <div id="view-admin" class="hide max-w-5xl mx-auto space-y-8">
-            <div class="flex justify-between items-center px-2">
-                <h1 class="text-2xl font-bold text-blue-900"><i class="fas fa-shield-alt text-blue-500 mr-2"></i>ระบบจัดการหลังบ้าน (Admin Dashboard)</h1>
-                <button class="btn-cancel text-gray-600 hover:text-blue-600 text-sm font-semibold transition px-3 py-1.5 rounded-lg bg-white border border-gray-200 shadow-sm"><i class="fas fa-arrow-left mr-1"></i> กลับหน้าหลัก</button>
+        <div id="view-admin" class="hide max-w-5xl mx-auto space-y-6">
+            <div class="flex justify-between items-center px-1">
+                <h1 class="text-xl font-bold text-blue-900"><i class="fas fa-shield-alt text-blue-500 mr-2"></i>ระบบจัดการหลังบ้าน (Admin Dashboard)</h1>
+                <button class="btn-cancel text-gray-600 hover:text-blue-600 text-xs font-semibold transition px-3 py-1.5 rounded-lg bg-white border border-gray-200 shadow-sm"><i class="fas fa-arrow-left mr-1"></i> กลับหน้าหลัก</button>
             </div>
 
             <!-- 1. จัดการเทอม -->
-            <div class="bg-white border border-blue-100 shadow-md shadow-blue-50/50 rounded-2xl p-6">
-                <h2 class="font-bold text-blue-800 text-lg mb-4 flex items-center"><i class="fas fa-calendar-alt text-blue-500 mr-2"></i>1. จัดการเทอมและปีการศึกษา</h2>
-                <form id="form-term" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6 items-end bg-blue-50/30 p-4 rounded-xl border border-blue-100/60">
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">เทอม</label><input type="number" id="f-term-sem" required class="w-full bg-white" placeholder="เช่น 1"></div>
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">ปีการศึกษา</label><input type="number" id="f-term-year" required class="w-full bg-white" placeholder="เช่น 2567"></div>
-                    <div class="flex items-center h-[42px] px-2"><label class="flex items-center text-sm text-slate-700 cursor-pointer font-medium"><input type="checkbox" id="f-term-active" class="mr-2 text-blue-600 rounded w-4 h-4"> ตั้งเป็นปัจจุบัน</label></div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">เพิ่มเทอม</button>
+            <div class="bg-white border border-blue-100 shadow-sm rounded-xl p-5">
+                <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center"><i class="fas fa-calendar-alt text-blue-500 mr-2"></i>1. จัดการเทอมและปีการศึกษา</h2>
+                <form id="form-term" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 mb-4 items-end bg-blue-50/30 p-3.5 rounded-xl border border-blue-100/60">
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">เทอม</label><input type="number" id="f-term-sem" required class="w-full bg-white text-sm" placeholder="เช่น 1"></div>
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">ปีการศึกษา</label><input type="number" id="f-term-year" required class="w-full bg-white text-sm" placeholder="เช่น 2567"></div>
+                    <div class="flex items-center h-[38px] px-1"><label class="flex items-center text-xs text-slate-700 cursor-pointer font-medium"><input type="checkbox" id="f-term-active" class="mr-2 text-blue-600 rounded w-4 h-4"> ตั้งเป็นปัจจุบัน</label></div>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-semibold transition shadow-sm">เพิ่มเทอม</button>
                 </form>
                 <div class="overflow-x-auto border border-blue-100 rounded-xl">
-                    <table class="w-full text-sm text-left text-slate-700">
-                        <thead class="text-xs text-blue-800 bg-blue-50 uppercase tracking-wider">
-                            <tr><th class="px-5 py-3 font-bold">เทอม/ปีการศึกษา</th><th class="px-5 py-3 font-bold">สถานะ</th><th class="px-5 py-3 font-bold text-right">การจัดการ</th></tr>
+                    <table class="w-full text-xs text-left text-slate-700">
+                        <thead class="bg-blue-50 text-blue-800 uppercase font-bold">
+                            <tr><th class="px-4 py-2.5">เทอม/ปีการศึกษา</th><th class="px-4 py-2.5">สถานะ</th><th class="px-4 py-2.5 text-right">การจัดการ</th></tr>
                         </thead>
                         <tbody id="terms-table-body" class="divide-y divide-blue-50"></tbody>
                     </table>
@@ -270,22 +282,22 @@
             </div>
 
             <!-- 2. จัดการรายวิชา -->
-            <div class="bg-white border border-blue-100 shadow-md shadow-blue-50/50 rounded-2xl p-6">
-                <h2 class="font-bold text-blue-800 text-lg mb-4 flex items-center"><i class="fas fa-book text-blue-500 mr-2"></i>2. จัดการรายวิชาและครูผู้สอน</h2>
-                <div class="flex items-center gap-3 mb-4">
-                    <label class="text-sm text-slate-700 font-semibold">เลือกเทอม:</label>
-                    <select id="admin-term-select" class="px-3 py-2 text-sm w-56 bg-white border-blue-200" onchange="loadAdminSubjects()"></select>
+            <div class="bg-white border border-blue-100 shadow-sm rounded-xl p-5">
+                <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center"><i class="fas fa-book text-blue-500 mr-2"></i>2. จัดการรายวิชาและครูผู้สอน</h2>
+                <div class="flex items-center gap-2 mb-3">
+                    <label class="text-xs text-slate-700 font-semibold">เลือกเทอม:</label>
+                    <select id="admin-term-select" class="px-3 py-1.5 text-xs w-48 bg-white border-blue-200" onchange="loadAdminSubjects()"></select>
                 </div>
-                <form id="form-add-subject" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6 bg-blue-50/30 p-4 rounded-xl border border-blue-100/60">
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">รหัสวิชา</label><input type="text" id="f-sub-code" required class="w-full bg-white" placeholder="เช่น ว30101"></div>
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">ชื่อวิชา</label><input type="text" id="f-sub-name" required class="w-full bg-white" placeholder="เช่น ฟิสิกส์"></div>
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">ครูผู้สอน</label><input type="text" id="f-sub-teacher" required class="w-full bg-white" placeholder="ชื่อคุณครู"></div>
-                    <div class="flex items-end"><button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">เพิ่มวิชา</button></div>
+                <form id="form-add-subject" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 mb-4 bg-blue-50/30 p-3.5 rounded-xl border border-blue-100/60">
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">รหัสวิชา</label><input type="text" id="f-sub-code" required class="w-full bg-white text-xs" placeholder="เช่น ว30101"></div>
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">ชื่อวิชา</label><input type="text" id="f-sub-name" required class="w-full bg-white text-xs" placeholder="เช่น ฟิสิกส์"></div>
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">ครูผู้สอน</label><input type="text" id="f-sub-teacher" required class="w-full bg-white text-xs" placeholder="ชื่อคุณครู"></div>
+                    <div class="flex items-end"><button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-semibold transition shadow-sm">เพิ่มวิชา</button></div>
                 </form>
                 <div class="overflow-x-auto border border-blue-100 rounded-xl">
-                    <table class="w-full text-sm text-left text-slate-700">
-                        <thead class="text-xs text-blue-800 bg-blue-50 uppercase tracking-wider">
-                            <tr><th class="px-5 py-3 font-bold">รหัสวิชา</th><th class="px-5 py-3 font-bold">ชื่อวิชา</th><th class="px-5 py-3 font-bold">ครูผู้สอน</th><th class="px-5 py-3 font-bold text-right">จัดการ</th></tr>
+                    <table class="w-full text-xs text-left text-slate-700">
+                        <thead class="bg-blue-50 text-blue-800 uppercase font-bold">
+                            <tr><th class="px-4 py-2.5">รหัสวิชา</th><th class="px-4 py-2.5">ชื่อวิชา</th><th class="px-4 py-2.5">ครูผู้สอน</th><th class="px-4 py-2.5 text-right">จัดการ</th></tr>
                         </thead>
                         <tbody id="subjects-table-body" class="divide-y divide-blue-50"></tbody>
                     </table>
@@ -293,22 +305,22 @@
             </div>
 
             <!-- 3. จัดการบัญชีผู้ใช้ -->
-            <div class="bg-white border border-blue-100 shadow-md shadow-blue-50/50 rounded-2xl p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-bold text-blue-800 text-lg flex items-center"><i class="fas fa-users text-blue-500 mr-2"></i>3. จัดการบัญชีผู้ใช้งานระบบ</h2>
+            <div class="bg-white border border-blue-100 shadow-sm rounded-xl p-5">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-bold text-blue-800 text-base flex items-center"><i class="fas fa-users text-blue-500 mr-2"></i>3. จัดการบัญชีผู้ใช้งานระบบ</h2>
                 </div>
                 
-                <form id="form-user-add" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6 items-end bg-blue-50/30 p-4 rounded-xl border border-blue-100/60">
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">Username</label><input type="text" id="f-add-user" required class="w-full lowercase bg-white" pattern="[a-zA-Z0-9]+" placeholder="เช่น teacher01"></div>
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">รหัสผ่าน</label><input type="password" id="f-add-pass" required minlength="6" class="w-full bg-white" placeholder="******"></div>
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">มอบสิทธิ์</label><select id="f-add-role" class="w-full bg-white"><option value="editor">Editor (สั่งงาน)</option><option value="admin">Admin (ผู้ดูแล)</option></select></div>
-                    <div><button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">สร้างบัญชี</button></div>
+                <form id="form-user-add" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 mb-4 items-end bg-blue-50/30 p-3.5 rounded-xl border border-blue-100/60">
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">Username</label><input type="text" id="f-add-user" required class="w-full lowercase bg-white text-xs" pattern="[a-zA-Z0-9]+" placeholder="เช่น teacher01"></div>
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">รหัสผ่าน</label><input type="password" id="f-add-pass" required minlength="6" class="w-full bg-white text-xs" placeholder="******"></div>
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">มอบสิทธิ์</label><select id="f-add-role" class="w-full bg-white text-xs"><option value="editor">Editor (สั่งงาน)</option><option value="admin">Admin (ผู้ดูแล)</option></select></div>
+                    <div><button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-xs font-semibold transition shadow-sm">สร้างบัญชี</button></div>
                 </form>
 
                 <div class="overflow-x-auto border border-blue-100 rounded-xl">
-                    <table class="w-full text-sm text-left text-slate-700">
-                        <thead class="text-xs text-blue-800 bg-blue-50 uppercase tracking-wider">
-                            <tr><th class="px-5 py-3 font-bold">บัญชีผู้ใช้ (Username)</th><th class="px-5 py-3 font-bold">ระดับสิทธิ์</th><th class="px-5 py-3 font-bold text-right">การจัดการ</th></tr>
+                    <table class="w-full text-xs text-left text-slate-700">
+                        <thead class="bg-blue-50 text-blue-800 uppercase font-bold">
+                            <tr><th class="px-4 py-2.5">บัญชีผู้ใช้ (Username)</th><th class="px-4 py-2.5">ระดับสิทธิ์</th><th class="px-4 py-2.5 text-right">การจัดการ</th></tr>
                         </thead>
                         <tbody id="users-table-body" class="divide-y divide-blue-50"></tbody>
                     </table>
@@ -318,7 +330,7 @@
 
     </main>
 
-    <footer class="text-center py-6 text-blue-500 text-sm mt-auto border-t border-blue-50">
+    <footer class="text-center py-4 text-blue-500 text-xs mt-auto border-t border-blue-50">
         HW Tracker © 2026 | ระบบจัดการภาระงานโรงเรียน
     </footer>
 
@@ -335,7 +347,7 @@
         const DOMAIN_SUFFIX = '@hw.local'; 
 
         let currentUser = null, userRole = null, globalAssignments = [], globalSubjects = [];
-        let selectedFiles = [], existingImages = []; 
+        let selectedFiles = [], editExistingImages = []; 
         
         const escapeQuote = str => str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
@@ -456,8 +468,6 @@
             if (error) return;
             
             globalAssignments = data.filter(item => item.subjects?.terms?.is_active);
-            
-            // เรียงลำดับงานตาม Order Num จากมากไปน้อย (งานล่าสุดอยู่ด้านบนสุด)
             globalAssignments.sort((a, b) => (Number(b.order_num) || 0) - (Number(a.order_num) || 0));
 
             const filterSelect = document.getElementById('filter-subject');
@@ -466,13 +476,14 @@
             if (activeTerm) {
                 const { data: subData } = await supabaseClient.from('subjects').select('*').order('subject_code');
                 globalSubjects = subData || [];
-                filterSelect.innerHTML = '<option value="">-- แสดงทุกรายวิชา --</option>';
+                filterSelect.innerHTML = '<option value="">-- ทุกรายวิชา --</option>';
                 globalSubjects.forEach(s => {
                     filterSelect.innerHTML += `<option value="${s.id}">${s.subject_code} - ${s.subject_name}</option>`;
                 });
             }
 
             renderAssignmentsTable();
+            Toast.fire({ icon: 'success', title: 'รีเฟรชข้อมูลสำเร็จ' });
         }
 
         function getSubjectColor(subjectId) {
@@ -513,22 +524,23 @@
                 const endTime = new Date(task.end_date).getTime();
                 const diffHours = (endTime - now) / (1000 * 60 * 60);
                 
-                const subjectBadge = `<span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${getSubjectColor(subj.id || 1)}">${subj.subject_code || '-'} ${subj.subject_name || ''}</span>`;
+                const subjectBadge = `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${getSubjectColor(subj.id || 1)}">${subj.subject_code || '-'}</span>`;
                 const dateStr = new Date(task.end_date).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
                 
                 const actionBtn = (currentUser && (userRole === 'admin' || userRole === 'editor')) ? `
                     <div class="flex justify-end gap-1">
-                        <button onclick="event.stopPropagation(); editTask(${task.id})" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 w-8 h-8 rounded-lg flex items-center justify-center transition" title="แก้ไข"><i class="fas fa-pen text-xs"></i></button>
-                        <button onclick="event.stopPropagation(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 w-8 h-8 rounded-lg flex items-center justify-center transition" title="ลบ"><i class="fas fa-trash-alt text-xs"></i></button>
-                    </div>` : `<span class="text-xs text-slate-400">คลิกดูรายละเอียด</span>`;
+                        <button onclick="event.stopPropagation(); editTask(${task.id})" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 w-7 h-7 rounded-md flex items-center justify-center transition" title="แก้ไข"><i class="fas fa-pen text-[11px]"></i></button>
+                        <button onclick="event.stopPropagation(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 w-7 h-7 rounded-md flex items-center justify-center transition" title="ลบ"><i class="fas fa-trash-alt text-[11px]"></i></button>
+                    </div>` : `<span class="text-[11px] text-slate-400">คลิกดู</span>`;
 
                 const rowHtml = `
                     <tr class="hover:bg-blue-50/50 transition cursor-pointer" onclick='showTaskModal(${JSON.stringify(task).replace(/'/g, "&apos;")})'>
-                        <td class="px-4 py-3 font-medium">${subjectBadge}</td>
-                        <td class="px-4 py-3 font-semibold text-slate-900">${task.topic} <span class="text-xs text-slate-400 font-normal">(ชิ้นที่ ${task.order_num})</span></td>
-                        <td class="px-4 py-3 text-blue-600"><i class="fas fa-user-tie mr-1 opacity-70"></i>${subj.teacher_name || '-'}</td>
-                        <td class="px-4 py-3 font-mono text-xs">${dateStr}</td>
-                        <td class="px-4 py-3 text-right">${actionBtn}</td>
+                        <td class="px-3 py-2 font-bold text-slate-600">งานที่ ${task.order_num}</td>
+                        <td class="px-3 py-2 font-medium">${subjectBadge}</td>
+                        <td class="px-3 py-2 font-semibold text-slate-900">${task.topic}</td>
+                        <td class="px-3 py-2 text-blue-600">${subj.teacher_name || '-'}</td>
+                        <td class="px-3 py-2 font-mono text-[11px]">${dateStr}</td>
+                        <td class="px-3 py-2 text-right">${actionBtn}</td>
                     </tr>
                 `;
 
@@ -544,9 +556,9 @@
                 }
             });
 
-            if(urgentCount === 0) tableUrgent.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400 text-sm">ไม่มีงานใกล้กำหนดส่ง</td></tr>`;
-            if(activeCount === 0) tableActive.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400 text-sm">ไม่มีงานที่กำลังดำเนินการ</td></tr>`;
-            if(expiredCount === 0) tableExpired.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400 text-sm">ไม่มีงานที่หมดเวลาแล้ว</td></tr>`;
+            if(urgentCount === 0) tableUrgent.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-slate-400 text-xs">ไม่มีงานใกล้กำหนดส่ง</td></tr>`;
+            if(activeCount === 0) tableActive.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-slate-400 text-xs">ไม่มีงานที่กำลังดำเนินการ</td></tr>`;
+            if(expiredCount === 0) tableExpired.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-slate-400 text-xs">ไม่มีงานที่หมดเวลาแล้ว</td></tr>`;
         }
 
         // แสดง Modal รายละเอียดงานครบทุกข้อมูลพร้อมรูปภาพ
@@ -556,10 +568,10 @@
             let imgHtml = '';
             
             if (imgs.length > 0) {
-                imgHtml = `<div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">`;
+                imgHtml = `<div class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2.5">`;
                 imgs.forEach(img => {
                     const imageUrl = convertDriveLink(img.lh_url);
-                    imgHtml += `<img src="${imageUrl}" class="w-full h-28 object-cover rounded-xl border border-slate-200 cursor-pointer shadow-sm hover:opacity-95 transition" onclick="window.open('${imageUrl}')">`;
+                    imgHtml += `<img src="${imageUrl}" class="w-full h-24 object-cover rounded-lg border border-slate-200 cursor-pointer shadow-sm hover:opacity-95 transition" onclick="window.open('${imageUrl}')">`;
                 });
                 imgHtml += `</div>`;
             }
@@ -568,69 +580,83 @@
             let remarkHtml = task.remarks ? `<div class="mt-2 text-sm bg-amber-50 text-amber-800 p-2.5 rounded-xl border border-amber-200"><b>หมายเหตุ:</b> ${task.remarks}</div>` : '';
 
             Swal.fire({
-                title: `<span class="text-blue-900 font-bold text-xl">${task.topic}</span>`,
+                title: `<span class="text-blue-900 font-bold text-lg">${task.topic}</span>`,
                 html: `
-                    <div class="text-left space-y-3 mt-2 text-sm text-slate-700">
+                    <div class="text-left space-y-2.5 mt-1 text-sm text-slate-700">
                         <div class="flex gap-2 flex-wrap">
-                            <span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded-lg font-bold">${subj.subject_code || ''} ${subj.subject_name || ''}</span>
-                            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg font-medium">${task.work_type}</span>
-                            <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg">ชิ้นที่ ${task.order_num}</span>
+                            <span class="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-md font-bold text-xs">${subj.subject_code || ''} ${subj.subject_name || ''}</span>
+                            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md font-medium text-xs">${task.work_type}</span>
+                            <span class="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-md text-xs">งานที่ ${task.order_num}</span>
                         </div>
-                        <p class="text-blue-600 font-medium"><i class="fas fa-user-tie mr-1"></i> ครูผู้สอน: ${subj.teacher_name || '-'}</p>
-                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div>
+                        <p class="text-blue-600 font-medium text-xs"><i class="fas fa-user-tie mr-1"></i> ครูผู้สอน: ${subj.teacher_name || '-'}</p>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed text-xs">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div>
                         ${linkHtml}
                         ${remarkHtml}
-                        <div class="text-xs text-slate-500 space-y-1">
+                        <div class="text-[11px] text-slate-500 space-y-0.5 pt-1">
                             <p><i class="fas fa-calendar-alt text-blue-500 mr-1"></i> วันสั่งงาน: ${new Date(task.start_date).toLocaleString('th-TH')}</p>
                             <p><i class="fas fa-clock text-orange-500 mr-1"></i> กำหนดส่ง: ${new Date(task.end_date).toLocaleString('th-TH')}</p>
                         </div>
                         ${imgHtml}
                     </div>
                 `,
-                width: '600px',
+                width: '550px',
                 confirmButtonText: 'ปิดหน้าต่าง',
                 confirmButtonColor: '#3b82f6'
             });
         }
 
-        // --- แก้ไขข้อมูลงาน (ดึงมาครบทุกคอลัมน์ + จัดการรูปภาพเดิมได้) ---
+        // --- แก้ไขข้อมูลงาน ---
         async function editTask(id) {
             const task = globalAssignments.find(t => t.id === id);
             if(!task) return;
 
-            let currentImages = task.images_data || [];
+            editExistingImages = task.images_data ? [...task.images_data] : [];
+            let newUploadedFiles = [];
 
             const { value: formValues } = await Swal.fire({
-                title: '<span class="text-blue-800 font-bold">แก้ไขข้อมูลภาระงาน</span>',
+                title: '<span class="text-blue-800 font-bold text-lg">แก้ไขข้อมูลภาระงาน</span>',
                 html: `
-                    <div class="text-left space-y-3 mt-2 max-h-[70vh] overflow-y-auto px-1 text-sm">
-                        <div><label class="font-semibold text-slate-700 mb-1 block">หัวข้อชิ้นงาน</label><input id="edit-topic" class="w-full" value="${task.topic}"></div>
-                        <div><label class="font-semibold text-slate-700 mb-1 block">รายละเอียด</label><textarea id="edit-details" class="w-full" rows="3">${task.details || ''}</textarea></div>
-                        <div><label class="font-semibold text-slate-700 mb-1 block">ลิงก์ / ข้อความเพิ่มเติม</label><input type="text" id="edit-link" class="w-full" value="${task.links || ''}"></div>
-                        <div><label class="font-semibold text-slate-700 mb-1 block">หมายเหตุ</label><input type="text" id="edit-remarks" class="w-full" value="${task.remarks || ''}"></div>
+                    <div class="text-left space-y-3 mt-2 max-h-[70vh] overflow-y-auto px-1 text-xs">
+                        <div><label class="font-semibold text-slate-700 mb-1 block">หัวข้อชิ้นงาน</label><input id="edit-topic" class="w-full text-xs" value="${task.topic}"></div>
+                        <div><label class="font-semibold text-slate-700 mb-1 block">รายละเอียด</label><textarea id="edit-details" class="w-full text-xs" rows="2">${task.details || ''}</textarea></div>
                         <div class="grid grid-cols-2 gap-2">
-                            <div><label class="font-semibold text-slate-700 mb-1 block">วันสั่งงาน</label><input type="datetime-local" id="edit-start" class="w-full" value="${task.start_date.slice(0,16)}"></div>
-                            <div><label class="font-semibold text-slate-700 mb-1 block">กำหนดส่ง</label><input type="datetime-local" id="edit-end" class="w-full" value="${task.end_date.slice(0,16)}"></div>
+                            <div><label class="font-semibold text-slate-700 mb-1 block">ลิงก์งาน</label><input type="text" id="edit-link" class="w-full text-xs" value="${task.links || ''}"></div>
+                            <div><label class="font-semibold text-slate-700 mb-1 block">หมายเหตุ</label><input type="text" id="edit-remarks" class="w-full text-xs" value="${task.remarks || ''}"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="font-semibold text-slate-700 mb-1 block">วันสั่งงาน</label><input type="datetime-local" id="edit-start" class="w-full text-xs" value="${task.start_date.slice(0,16)}"></div>
+                            <div><label class="font-semibold text-slate-700 mb-1 block">กำหนดส่ง</label><input type="datetime-local" id="edit-end" class="w-full text-xs" value="${task.end_date.slice(0,16)}"></div>
                         </div>
                         <div>
-                            <label class="font-semibold text-slate-700 mb-1 block">รูปภาพเดิม (คลิก X เพื่อลบรูปที่ไม่ต้องการ)</label>
-                            <div id="edit-existing-images" class="flex flex-wrap gap-2 mb-3">
-                                ${currentImages.map((img, idx) => `
-                                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-300 shadow-sm" id="img-box-${idx}">
-                                        <img src="${convertDriveLink(img.lh_url)}" class="w-full h-full object-cover">
-                                        <div onclick="removeExistingImage(${idx})" class="preview-remove-btn"><i class="fas fa-times"></i></div>
-                                    </div>
-                                `).join('')}
-                            </div>
+                            <label class="font-semibold text-slate-700 mb-1 block">รูปภาพเดิม (คลิก X เพื่อลบ)</label>
+                            <div id="edit-existing-images-container" class="flex flex-wrap gap-2 mb-2"></div>
                         </div>
                         <div>
-                            <label class="font-semibold text-slate-700 mb-1 block">อัปโหลดรูปภาพเพิ่มเติม (ถ้ามี)</label>
+                            <label class="font-semibold text-slate-700 mb-1 block">เพิ่มรูปภาพใหม่</label>
                             <input type="file" id="edit-new-images" multiple accept="image/*" class="w-full text-xs">
+                            <div id="edit-new-previews" class="flex flex-wrap gap-2 mt-2"></div>
                         </div>
                     </div>
                 `,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
-                preConfirm: async () => {
+                didOpen: () => {
+                    renderEditExistingImages();
+                    document.getElementById('edit-new-images').addEventListener('change', async (e) => {
+                        const files = Array.from(e.target.files);
+                        if(files.length > 0) {
+                            const base64Files = await Promise.all(files.map(getBase64));
+                            const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
+                            const res = await (await (fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd }))).json();
+                            if(res.status === 'success') {
+                                res.data.forEach(img => {
+                                    newUploadedFiles.push({ file_id: img.file_id, name: img.name, lh_url: convertDriveLink(img.lh_url) });
+                                });
+                                renderEditNewPreviews(newUploadedFiles);
+                            }
+                        }
+                    });
+                },
+                preConfirm: () => {
                     const topic = document.getElementById('edit-topic').value;
                     const details = document.getElementById('edit-details').value;
                     const links = document.getElementById('edit-link').value;
@@ -638,24 +664,7 @@
                     const start_date = document.getElementById('edit-start').value;
                     const end_date = document.getElementById('edit-end').value;
                     
-                    const newFileInput = document.getElementById('edit-new-images');
-                    let newImgs = [];
-                    if (newFileInput.files.length > 0) {
-                        const newFiles = Array.from(newFileInput.files);
-                        const base64Files = await Promise.all(newFiles.map(getBase64));
-                        const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
-                        const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
-                        if (res.status === 'success') {
-                            newImgs = res.data.map(img => ({
-                                file_id: img.file_id,
-                                name: img.name,
-                                lh_url: convertDriveLink(img.lh_url)
-                            }));
-                        }
-                    }
-
-                    const finalImages = [...currentImages, ...newImgs];
-
+                    const finalImages = [...editExistingImages, ...newUploadedFiles];
                     return { topic, details, links, remarks, start_date, end_date, images_data: finalImages };
                 }
             });
@@ -668,17 +677,40 @@
             }
         }
 
-        // ฟังก์ชันลบรูปภาพเดิมออกเวลากดแก้ไข
-        window.removeExistingImage = function(idx) {
-            const task = globalAssignments.find(t => t.id === globalAssignments[0]?.id); // อ้างอิงชั่วคราว
-            // ให้ลบออกจากอาเรย์ global หรือตัวแปรชั่วคราว
-            const box = document.getElementById(`img-box-${idx}`);
-            if (box) box.remove();
-            // หมายเหตุ: ในโหมดแก้ไขจริง รูปจะถูกตัดออกเมื่อกดบันทึก
-        };
+        window.renderEditExistingImages = function() {
+            const container = document.getElementById('edit-existing-images-container');
+            if(!container) return;
+            container.innerHTML = '';
+            editExistingImages.forEach((img, idx) => {
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-300 shadow-sm" id="ex-img-${idx}">
+                        <img src="${convertDriveLink(img.lh_url)}" class="w-full h-full object-cover">
+                        <div onclick="removeEditExistingImage(${idx})" class="preview-remove-btn"><i class="fas fa-times"></i></div>
+                    </div>
+                `);
+            });
+        }
+
+        window.removeEditExistingImage = function(idx) {
+            editExistingImages.splice(idx, 1);
+            renderEditExistingImages();
+        }
+
+        window.renderEditNewPreviews = function(filesList) {
+            const container = document.getElementById('edit-new-previews');
+            if(!container) return;
+            container.innerHTML = '';
+            filesList.forEach((img, idx) => {
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-blue-300 shadow-sm">
+                        <img src="${convertDriveLink(img.lh_url)}" class="w-full h-full object-cover">
+                    </div>
+                `);
+            });
+        }
 
         async function deleteTask(id, imagesDataStr) {
-            Swal.fire({ title: 'ต้องการลบงานนี้หรือไม่?', text: 'การลบจะไม่สามารถกู้คืนได้', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8', confirmButtonText: 'ลบข้อมูล', cancelButtonText: 'ยกเลิก'
+            Swal.fire({ title: 'ต้องการลบงานนี้หรือไม่?', text: 'การลบจะไม่สามารถกู้คืนได้', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8', confirmButtonText: 'ลบทิ้ง', cancelButtonText: 'ยกเลิก'
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
@@ -712,7 +744,7 @@
             previewContainer.innerHTML = '';
             selectedFiles.forEach((file, index) => {
                 const url = URL.createObjectURL(file);
-                previewContainer.insertAdjacentHTML('beforeend', `<div class="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 shadow-sm"><img src="${url}" class="w-full h-full object-cover"><div onclick="removeImage(${index})" class="preview-remove-btn"><i class="fas fa-times"></i></div></div>`);
+                previewContainer.insertAdjacentHTML('beforeend', `<div class="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 shadow-sm"><img src="${url}" class="w-full h-full object-cover"><div onclick="removeImage(${index})" class="preview-remove-btn"><i class="fas fa-times"></i></div></div>`);
             });
         }
         function removeImage(index) { selectedFiles.splice(index, 1); renderPreviews(); }
@@ -845,10 +877,10 @@
             data.forEach(term => {
                 if (term.is_active) activeTermId = term.id;
                 adminSelect.innerHTML += `<option value="${term.id}">เทอม ${term.semester}/${term.academic_year} ${term.is_active ? '(ปัจจุบัน)' : ''}</option>`;
-                const badge = term.is_active ? `<span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold"><i class="fas fa-check-circle mr-1"></i>ปัจจุบัน</span>` : `<span class="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg text-xs">อดีต</span>`;
-                const actionBtn = term.is_active ? '' : `<button onclick="setTermActive(${term.id})" class="text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium mr-2 transition">ตั้งเป็นปัจจุบัน</button>`;
+                const badge = term.is_active ? `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[11px] font-bold"><i class="fas fa-check-circle mr-1"></i>ปัจจุบัน</span>` : `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-[11px]">อดีต</span>`;
+                const actionBtn = term.is_active ? '' : `<button onclick="setTermActive(${term.id})" class="text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded font-medium mr-1.5 transition">ตั้งเป็นปัจจุบัน</button>`;
 
-                tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-blue-50/40 transition"><td class="px-5 py-3 font-semibold">เทอม ${term.semester} / ${term.academic_year}</td><td class="px-5 py-3">${badge}</td><td class="px-5 py-3 text-right">${actionBtn}<button onclick="editTerm(${term.id}, ${term.semester}, ${term.academic_year})" class="text-slate-400 hover:text-blue-600 px-2 py-1"><i class="fas fa-pen"></i></button><button onclick="deleteTerm(${term.id})" class="text-red-400 hover:text-red-600 px-2 py-1 ml-1"><i class="fas fa-trash"></i></button></td></tr>`);
+                tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-blue-50/40 transition"><td class="px-4 py-2 font-semibold">เทอม ${term.semester} / ${term.academic_year}</td><td class="px-4 py-2">${badge}</td><td class="px-4 py-2 text-right">${actionBtn}<button onclick="editTerm(${term.id}, ${term.semester}, ${term.academic_year})" class="text-slate-400 hover:text-blue-600 px-1.5 py-1"><i class="fas fa-pen"></i></button><button onclick="deleteTerm(${term.id})" class="text-red-400 hover:text-red-600 px-1.5 py-1 ml-1"><i class="fas fa-trash"></i></button></td></tr>`);
             });
 
             if (activeTermId) adminSelect.value = activeTermId;
@@ -859,7 +891,7 @@
         async function editTerm(id, sem, year) { 
             const { value: form } = await Swal.fire({ 
                 title: '<span class="text-blue-800 font-bold">แก้ไขเทอม</span>', 
-                html: `<div class="space-y-3 mt-2"><input id="e-sem" class="w-full" placeholder="เทอม" value="${sem}"><input id="e-year" class="w-full" placeholder="ปีการศึกษา" value="${year}"></div>`, 
+                html: `<div class="space-y-3 mt-2"><input id="e-sem" class="w-full text-sm" placeholder="เทอม" value="${sem}"><input id="e-year" class="w-full text-sm" placeholder="ปีการศึกษา" value="${year}"></div>`, 
                 showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
                 preConfirm: () => ({ sem: document.getElementById('e-sem').value, year: document.getElementById('e-year').value }) 
             }); 
@@ -879,13 +911,13 @@
             if(!termId) return tbody.innerHTML = '';
             const { data } = await supabaseClient.from('subjects').select('*').eq('term_id', termId).order('subject_code');
             tbody.innerHTML = '';
-            data?.forEach(sub => tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-blue-50/40 transition"><td class="px-5 py-3 font-semibold text-blue-800">${sub.subject_code}</td><td class="px-5 py-3">${sub.subject_name}</td><td class="px-5 py-3">${sub.teacher_name}</td><td class="px-5 py-3 text-right"><button onclick="editSubject(${sub.id}, '${sub.subject_code}', '${sub.subject_name}', '${sub.teacher_name}')" class="text-slate-400 hover:text-blue-600 px-2 py-1"><i class="fas fa-pen"></i></button><button onclick="deleteSubject(${sub.id})" class="text-red-400 hover:text-red-600 px-2 py-1 ml-2"><i class="fas fa-trash"></i></button></td></tr>`));
+            data?.forEach(sub => tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-blue-50/40 transition"><td class="px-4 py-2 font-semibold text-blue-800">${sub.subject_code}</td><td class="px-4 py-2">${sub.subject_name}</td><td class="px-4 py-2">${sub.teacher_name}</td><td class="px-4 py-2 text-right"><button onclick="editSubject(${sub.id}, '${sub.subject_code}', '${sub.subject_name}', '${sub.teacher_name}')" class="text-slate-400 hover:text-blue-600 px-1.5 py-1"><i class="fas fa-pen"></i></button><button onclick="deleteSubject(${sub.id})" class="text-red-400 hover:text-red-600 px-1.5 py-1 ml-1"><i class="fas fa-trash"></i></button></td></tr>`));
         }
 
         async function editSubject(id, code, name, teacher) { 
             const { value: form } = await Swal.fire({ 
                 title: '<span class="text-blue-800 font-bold">แก้ไขรายวิชา</span>', 
-                html: `<div class="space-y-3 mt-2"><input id="e-sub-code" class="w-full" placeholder="รหัสวิชา" value="${code}"><input id="e-sub-name" class="w-full" placeholder="ชื่อวิชา" value="${name}"><input id="e-sub-teacher" class="w-full" placeholder="ครูผู้สอน" value="${teacher}"></div>`, 
+                html: `<div class="space-y-3 mt-2"><input id="e-sub-code" class="w-full text-sm" placeholder="รหัสวิชา" value="${code}"><input id="e-sub-name" class="w-full text-sm" placeholder="ชื่อวิชา" value="${name}"><input id="e-sub-teacher" class="w-full text-sm" placeholder="ครูผู้สอน" value="${teacher}"></div>`, 
                 showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
                 preConfirm: () => ({ code: document.getElementById('e-sub-code').value, name: document.getElementById('e-sub-name').value, teacher: document.getElementById('e-sub-teacher').value }) 
             }); 
@@ -929,20 +961,20 @@
 
             data.forEach(user => {
                 const isAdmin = user.role === 'admin';
-                const badge = isAdmin ? '<span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-shield-alt mr-1"></i>Admin</span>' : '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs font-medium"><i class="fas fa-edit mr-1"></i>Editor</span>';
+                const badge = isAdmin ? '<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[11px] font-bold"><i class="fas fa-shield-alt mr-1"></i>Admin</span>' : '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[11px] font-medium"><i class="fas fa-edit mr-1"></i>Editor</span>';
                 const name = user.username || '-';
                 
                 const isSelf = currentUser && currentUser.id === user.user_id;
                 const actionBtns = isSelf
                     ? `<span class="text-xs text-slate-400 italic"><i class="fas fa-lock mr-1"></i> บัญชีของคุณเอง</span>`
-                    : `<button onclick="editAppUser('${user.user_id}', '${name}', '${user.role}')" class="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium transition mr-1.5"><i class="fas fa-pen mr-1"></i> แก้ไข</button>
-                       <button onclick="deleteAppUser('${user.user_id}', '${name}')" class="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg font-medium transition"><i class="fas fa-trash mr-1"></i> ลบ</button>`;
+                    : `<button onclick="editAppUser('${user.user_id}', '${name}', '${user.role}')" class="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded font-medium transition mr-1"><i class="fas fa-pen mr-1"></i> แก้ไข</button>
+                       <button onclick="deleteAppUser('${user.user_id}', '${name}')" class="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded font-medium transition"><i class="fas fa-trash mr-1"></i> ลบ</button>`;
 
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-blue-50/40 transition">
-                        <td class="px-5 py-3 font-semibold flex items-center"><i class="fas fa-user-circle text-slate-300 mr-2.5 text-lg"></i>${name}</td>
-                        <td class="px-5 py-3">${badge}</td>
-                        <td class="px-5 py-3 text-right">${actionBtns}</td>
+                        <td class="px-4 py-2 font-semibold flex items-center"><i class="fas fa-user-circle text-slate-300 mr-2 text-base"></i>${name}</td>
+                        <td class="px-4 py-2">${badge}</td>
+                        <td class="px-4 py-2 text-right">${actionBtns}</td>
                     </tr>
                 `);
             });
@@ -952,10 +984,10 @@
             const { value: formValues } = await Swal.fire({
                 title: '<span class="text-blue-800 font-bold">แก้ไขข้อมูลผู้ใช้</span>',
                 html: `
-                    <div class="text-left space-y-3 mt-3">
-                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full lowercase" value="${currentName}"></div>
-                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label>
-                            <select id="eu-role" class="w-full">
+                    <div class="text-left space-y-3 mt-3 text-xs">
+                        <div><label class="font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full text-xs lowercase" value="${currentName}"></div>
+                        <div><label class="font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label>
+                            <select id="eu-role" class="w-full text-xs">
                                 <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option>
                                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option>
                             </select>
