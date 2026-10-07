@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบ Homework Tracker R02</title>
+    <title> ระบบHomework Tracker </title>
     
     <!-- CSS / Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -71,7 +71,7 @@
             <div class="flex justify-between h-14 items-center">
                 <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchView(viewPublic)">
                     <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-8 w-auto object-contain rounded-md">
-                    <span class="text-lg tracking-wide text-blue-900 font-bold">HW Tracker R02</span>
+                    <span class="text-lg tracking-wide text-blue-900 font-bold">HW Tracker</span>
                 </div>
                 <div class="flex items-center space-x-2 text-sm">
                     <span id="user-display" class="text-blue-700 font-medium hidden sm:inline-block bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 text-xs"></span>
@@ -81,7 +81,7 @@
                     <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการ</button>
                     <button id="btn-show-add" class="hide btn-primary px-3 py-1.5 font-medium text-xs shadow-sm"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
                     <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -113,7 +113,7 @@
                 <i class="fas fa-circle-notch fa-spin text-2xl text-blue-400"></i>
             </div>
 
-            <!-- ตารางภาระงาน (ตารางเดียว จัดสีพาสเทลตามสถานะ) -->
+            <!-- ตารางภาระงาน (ตารางเดียว จัดสีพาสเทลเข้มขึ้นตามสถานะ) -->
             <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-3.5">
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left text-slate-700">
@@ -294,7 +294,7 @@
     </main>
 
     <footer class="text-center py-4 text-blue-500 text-xs mt-auto border-t border-blue-50">
-        HW Tracker © 2026 | Homework-Tracker-System
+        HW Tracker © 2026 | ระบบจัดการภาระงานโรงเรียน
     </footer>
 
     <script>
@@ -480,12 +480,12 @@
                 const endTime = new Date(task.end_date).getTime();
                 const diffHours = (endTime - now) / (1000 * 60 * 60);
                 
-                // กำหนดสีพื้นหลังพาสเทลตามเงื่อนไข
+                // ปรับสีพื้นหลังพาสเทลให้เข้มขึ้นเล็กน้อย
                 let rowBgClass = '';
                 if (endTime < now) {
-                    rowBgClass = 'bg-slate-100/70 text-slate-500'; // เลยเวลา -> สีเทาอ่อน
+                    rowBgClass = 'bg-slate-200/70 text-slate-500'; // เลยเวลา -> สีเทาเข้มขึ้น
                 } else if (diffHours <= 48 && diffHours > 0) {
-                    rowBgClass = 'bg-red-50/70'; // ใกล้กำหนดส่ง -> สีแดงพาสเทลอ่อน
+                    rowBgClass = 'bg-red-100/70'; // ใกล้กำหนดส่ง -> สีแดงพาสเทลเข้มขึ้น
                 }
 
                 const subjectBadge = `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${getSubjectColor(subj.id || 1)}">${subj.subject_code || '-'}</span>`;
@@ -494,8 +494,8 @@
                 
                 const actionBtn = (currentUser && (userRole === 'admin' || userRole === 'editor')) ? `
                     <div class="flex justify-end gap-1">
-                        <button onclick="event.stopPropagation(); editTask(${task.id})" class="text-blue-500 hover:text-blue-700 bg-white/80 hover:bg-blue-50 w-7 h-7 rounded-md flex items-center justify-center transition shadow-sm" title="แก้ไข"><i class="fas fa-pen text-[11px]"></i></button>
-                        <button onclick="event.stopPropagation(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="text-red-400 hover:text-red-600 bg-white/80 hover:bg-red-50 w-7 h-7 rounded-md flex items-center justify-center transition shadow-sm" title="ลบ"><i class="fas fa-trash-alt text-[11px]"></i></button>
+                        <button onclick="event.stopPropagation(); editTask(${task.id})" class="text-blue-500 hover:text-blue-700 bg-white/90 hover:bg-blue-50 w-7 h-7 rounded-md flex items-center justify-center transition shadow-sm" title="แก้ไข"><i class="fas fa-pen text-[11px]"></i></button>
+                        <button onclick="event.stopPropagation(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="text-red-400 hover:text-red-600 bg-white/90 hover:bg-red-50 w-7 h-7 rounded-md flex items-center justify-center transition shadow-sm" title="ลบ"><i class="fas fa-trash-alt text-[11px]"></i></button>
                     </div>` : `<span class="text-[11px] text-slate-400">คลิกดู</span>`;
 
                 tableContainer.insertAdjacentHTML('beforeend', `
@@ -516,7 +516,7 @@
             }
         }
 
-        // --- แสดง Modal รายละเอียดงานแบบหลายคอลัมน์ (Responsive) ตัดสถานะออก ---
+        // --- แสดง Modal รายละเอียดงานแบบคอลัมน์ Responsive (ตามภาพตัวอย่าง) ---
         function showTaskModal(task) {
             const subj = task.subjects || {};
             const imgs = task.images_data || [];
@@ -558,7 +558,7 @@
                 </div>` : '';
 
             Swal.fire({
-                title: `<div class="flex justify-between items-center border-b border-slate-100 pb-3 text-left"><span class="text-xl font-bold text-blue-950">Details</span><button onclick="Swal.close()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fas fa-times"></i></button></div>`,
+                title: `<div class="flex justify-between items-center border-b border-slate-100 pb-3 text-left"><span class="text-xl font-bold text-blue-950">รายละเอียดงาน</span><button onclick="Swal.close()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fas fa-times"></i></button></div>`,
                 html: `
                     <div class="text-left mt-3 max-h-[75vh] overflow-y-auto px-1">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-slate-700">
@@ -663,9 +663,11 @@
                     document.getElementById('edit-new-images').addEventListener('change', async (e) => {
                         const files = Array.from(e.target.files);
                         if(files.length > 0) {
+                            Swal.showLoading();
                             const base64Files = await Promise.all(files.map(getBase64));
                             const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
                             const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
+                            Swal.hideLoading();
                             if(res.status === 'success') {
                                 res.data.forEach(img => {
                                     const fileObj = { file_id: img.file_id, name: img.name, lh_url: convertDriveLink(img.lh_url) };
@@ -793,13 +795,18 @@
         // ==========================================
         const fileInput = document.getElementById('f-images');
         const previewContainer = document.getElementById('image-previews');
+        const btnSubmit = document.getElementById('btn-submit');
         
         fileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             if(files.length > 0) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังอัปโหลดรูป...';
                 const base64Files = await Promise.all(files.map(getBase64));
                 const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
                 const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = 'บันทึกข้อมูล';
                 if(res.status === 'success') {
                     res.data.forEach(img => {
                         const fileObj = { file_id: img.file_id, name: img.name, lh_url: convertDriveLink(img.lh_url) };
