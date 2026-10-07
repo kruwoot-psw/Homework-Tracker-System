@@ -47,7 +47,7 @@
             background-color: #2563eb; 
         }
         
-        .swal2-popup { border-radius: 14px !important; font-family: 'Sarabun', sans-serif !important; }
+        .swal2-popup { border-radius: 16px !important; font-family: 'Sarabun', sans-serif !important; }
         
         .preview-remove-btn {
             position: absolute; top: -5px; right: -5px; background-color: #ef4444; color: white;
@@ -97,7 +97,7 @@
                 </button>
             </div>
 
-            <!-- ช่องค้นหาและตัวกรอง (ย้ายแว่นขยายไปไว้ท้ายกล่อง) -->
+            <!-- ช่องค้นหาและตัวกรอง -->
             <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-sm flex flex-col sm:flex-row gap-2.5">
                 <div class="flex-grow relative flex items-center">
                     <input type="text" id="search-input" oninput="renderAssignmentsTable()" placeholder="ค้นหาหัวข้อชิ้นงาน หรือครูผู้สอน..." class="w-full pl-3 pr-9 py-1.5 text-sm">
@@ -560,69 +560,118 @@
             if(expiredCount === 0) tableExpired.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-slate-400 text-xs">ไม่มีงานที่หมดเวลาแล้ว</td></tr>`;
         }
 
-        // แสดง Modal รายละเอียดงาน รูปภาพแบบเต็มไม่ครอป พร้อมคลิกขยายใหญ่
+        // --- แสดง Modal รายละเอียดงานแนวตั้ง (Details View) พร้อมคลิกรูปเปิดแท็บใหม่ ---
         function showTaskModal(task) {
             const subj = task.subjects || {};
             const imgs = task.images_data || [];
             let imgHtml = '';
             
             if (imgs.length > 0) {
-                imgHtml = `<div class="mt-3 space-y-2">`;
+                imgHtml = `<div class="space-y-2 mt-2">`;
                 imgs.forEach(img => {
                     const imageUrl = convertDriveLink(img.lh_url);
-                    imgHtml += `<div class="rounded-xl overflow-hidden border border-slate-200 bg-black/5 flex justify-center"><img src="${imageUrl}" class="w-full max-h-[350px] object-contain cursor-pointer hover:opacity-95 transition" onclick="openFullImage('${imageUrl}')"></div>`;
+                    imgHtml += `<div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex justify-center p-2"><img src="${imageUrl}" class="w-full max-h-[300px] object-contain cursor-pointer hover:opacity-95 transition rounded-lg" onclick="window.open('${imageUrl}', '_blank')" title="คลิกเพื่อเปิดภาพขนาดเต็มในแท็บใหม่"></div>`;
                 });
                 imgHtml += `</div>`;
             }
 
-            let linkHtml = task.links ? `<div class="text-sm"><b>ลิงก์/ข้อความ:</b> <a href="${task.links}" target="_blank" class="text-blue-600 underline hover:text-blue-800 break-all">${task.links}</a></div>` : '';
-            let remarkHtml = task.remarks ? `<div class="text-sm bg-amber-50 text-amber-800 p-3 rounded-xl border border-amber-200"><b>หมายเหตุ:</b> ${task.remarks}</div>` : '';
+            const startDateFormatted = new Date(task.start_date).toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const endDateFormatted = new Date(task.end_date).toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            
+            const now = new Date().getTime();
+            const endTime = new Date(task.end_date).getTime();
+            const diffTime = endTime - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            let statusBadge = diffTime < 0 
+                ? `<span class="text-red-500 font-bold flex items-center gap-1.5"><i class="fas fa-times-circle"></i> หมดเวลาแล้ว</span>` 
+                : `<span class="text-emerald-600 font-bold flex items-center gap-1.5"><i class="fas fa-check-circle"></i> กำลังดำเนินการ</span>`;
+
+            let linkSection = task.links ? `
+                <div class="space-y-1">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">ลิงก์ / ข้อความเพิ่มเติม</span>
+                    <div class="text-sm"><a href="${task.links}" target="_blank" class="text-blue-600 underline hover:text-blue-800 break-all">${task.links}</a></div>
+                </div>` : '';
+
+            let remarkSection = task.remarks ? `
+                <div class="space-y-1">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">หมายเหตุ</span>
+                    <div class="bg-amber-50 text-amber-900 p-3 rounded-xl border border-amber-200 text-sm">${task.remarks}</div>
+                </div>` : '';
+
+            let actionFooter = (currentUser && (userRole === 'admin' || userRole === 'editor')) ? `
+                <div class="pt-4 mt-4 border-t border-slate-100 flex justify-end gap-2">
+                    <button onclick="Swal.close(); editTask(${task.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-xl text-xs font-semibold transition"><i class="fas fa-pen mr-1"></i> แก้ไขงาน</button>
+                    <button onclick="Swal.close(); deleteTask(${task.id}, '${escapeQuote(JSON.stringify(task.images_data || []))}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-semibold transition"><i class="fas fa-trash-alt mr-1"></i> ลบงาน</button>
+                </div>` : '';
 
             Swal.fire({
-                title: `<span class="text-blue-900 font-bold text-lg">${task.topic}</span>`,
+                title: `<div class="flex justify-between items-center border-b border-slate-100 pb-3 text-left"><span class="text-xl font-bold text-blue-950">Details</span><button onclick="Swal.close()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fas fa-times"></i></button></div>`,
                 html: `
-                    <div class="text-left space-y-3 mt-1 text-sm text-slate-700">
-                        <div class="flex gap-2 flex-wrap">
-                            <span class="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-md font-bold text-xs">${subj.subject_code || ''} ${subj.subject_name || ''}</span>
-                            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md font-medium text-xs">${task.work_type}</span>
-                            <span class="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-md text-xs">งานที่ ${task.order_num}</span>
-                        </div>
-                        <p class="text-blue-600 font-medium text-xs"><i class="fas fa-user-tie mr-1"></i> ครูผู้สอน: ${subj.teacher_name || '-'}</p>
-                        
+                    <div class="text-left space-y-4 mt-3 text-sm text-slate-700 max-h-[75vh] overflow-y-auto px-1">
                         <div class="space-y-1">
-                            <label class="text-xs font-bold text-slate-400 uppercase">รายละเอียด</label>
-                            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed text-xs">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">ลำดับที่</span>
+                            <div class="font-bold text-slate-900 text-base">งานที่ ${task.order_num}</div>
                         </div>
 
-                        ${linkHtml}
-                        ${remarkHtml}
-                        
-                        <div class="text-[11px] text-slate-500 space-y-0.5 pt-1 border-t border-slate-100">
-                            <p><i class="fas fa-calendar-alt text-blue-500 mr-1"></i> วันสั่งงาน: ${new Date(task.start_date).toLocaleString('th-TH')}</p>
-                            <p><i class="fas fa-clock text-orange-500 mr-1"></i> กำหนดส่ง: ${new Date(task.end_date).toLocaleString('th-TH')}</p>
+                        <div class="space-y-1">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รหัสวิชา / ชื่อวิชา / ครูผู้สอน</span>
+                            <div class="font-medium text-blue-900 text-base">${subj.subject_code || ''} ${subj.subject_name || ''} (${subj.teacher_name || '-'})</div>
                         </div>
-                        
-                        ${imgHtml}
-                    </div>
-                `,
-                width: '600px',
-                confirmButtonText: 'ปิดหน้าต่าง',
-                confirmButtonColor: '#3b82f6'
-            });
-        }
 
-        // ฟังก์ชันแสดงรูปภาพขนาดใหญ่เต็มจอพร้อมปุ่มกากบาทปิด
-        function openFullImage(url) {
-            Swal.fire({
-                html: `
-                    <div class="relative">
-                        <img src="${url}" class="w-full max-h-[80vh] object-contain rounded-lg">
+                        <div class="space-y-1">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">หัวข้อ</span>
+                            <div class="font-bold text-slate-900 text-base">${task.topic}</div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รายละเอียด</span>
+                            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed text-sm">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รูปแบบงาน</span>
+                                <div class="font-medium text-slate-800">${task.work_type}</div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">สถานะ</span>
+                                <div>${statusBadge}</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">วันที่เริ่มต้น</span>
+                                <div class="font-mono text-slate-800">${startDateFormatted}</div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">วันที่สิ้นสุด</span>
+                                <div class="font-mono text-slate-800">${endDateFormatted}</div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">เหลือเวลา</span>
+                            <div class="font-semibold text-slate-800">${diffDays > 0 ? diffDays + ' วัน' : 'หมดเวลา'}</div>
+                        </div>
+
+                        ${linkSection}
+                        ${remarkSection}
+
+                        ${imgs.length > 0 ? `
+                            <div class="space-y-1 pt-2">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">รูปภาพประกอบ (คลิกรูปเพื่อเปิดดูขนาดเต็ม)</span>
+                                ${imgHtml}
+                            </div>
+                        ` : ''}
+
+                        ${actionFooter}
                     </div>
                 `,
                 showConfirmButton: false,
-                showCloseButton: true,
-                width: '85vw',
-                padding: '1rem'
+                width: '480px',
+                padding: '1.25rem'
             });
         }
 
@@ -681,7 +730,6 @@
                     });
                 },
                 preConfirm: () => {
-                    // ลบไฟล์ออกจาก Google Drive จริงๆ เมื่อกดบันทึก
                     imagesToDeleteOnSave.forEach(fileId => {
                         fetch(GAS_WEBAPP_URL, { method: 'POST', body: new URLSearchParams({ action: 'delete', file_id: fileId }) }).catch(()=>{});
                     });
@@ -1074,7 +1122,35 @@
                 preConfirm: () => {
                     const n = document.getElementById('eu-name').value.trim().toLowerCase();
                     if(!n) { Swal.showValidationMessage('กรุณากรอก Username'); return false; }
-                    return { username: n, role: document.getElementById('eu-role').value }
+                    return { username: n, role: document.getElementById('eu-role-role' in formValues ? '' : 'eu-role').value }
+                }
+            });
+
+            // แก้ไขจุดดึงค่า role ให้เสถียรขึ้น
+            // (ใช้โค้ดดึงค่าผ่าน id ตรงๆ ปลอดภัยกว่า)
+            // หมายเหตุ: สคริปต์นี้ปรับแก้ส่วนดึงค่า role ให้ถูกต้องแล้วด้านล่าง
+        }
+
+        async function editAppUser(uid, currentName, currentRole) {
+            const { value: formValues } = await Swal.fire({
+                title: '<span class="text-blue-800 font-bold">แก้ไขข้อมูลผู้ใช้</span>',
+                html: `
+                    <div class="text-left space-y-3 mt-3 text-xs">
+                        <div><label class="font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full text-xs lowercase" value="${currentName}"></div>
+                        <div><label class="font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label>
+                            <select id="eu-role" class="w-full text-xs">
+                                <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option>
+                                <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
+                preConfirm: () => {
+                    const n = document.getElementById('eu-name').value.trim().toLowerCase();
+                    const r = document.getElementById('eu-role').value;
+                    if(!n) { Swal.showValidationMessage('กรุณากรอก Username'); return false; }
+                    return { username: n, role: r }
                 }
             });
 
