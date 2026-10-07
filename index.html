@@ -308,7 +308,7 @@
         
         const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw0f_Nd6T2IX38JLLyCviq4MklmBodQfgacdSeucdYZZhj90GaUdpL3ndKfKj4CYfGn/exec';
         
-        // Telegram Config สำหรับยิงตรงจากหน้าเว็บ
+        // Telegram Config สำหรับยิงตรงจากหน้าเว็บ (ตัดปัญหา 400 Bad Request ด้วย Plain Text)
         const TG_BOT_TOKEN = "7980580329:AAHNgBjCdxlowQFzxn8PnFrqJ7xpszGdO2o";
         const TG_CHAT_ID = "-4516821489";
 
@@ -563,40 +563,40 @@
             });
         }
 
-        // --- ฟังก์ชันยิงแจ้งเตือนตรงไป Telegram จากหน้าเว็บ ---
+        // --- ฟังก์ชันยิงตรงไป Telegram ป้องกัน Status 400 ด้วยการส่งแบบ Plain Text ---
         async function sendTelegramDirectly(taskData, subjectInfo, images) {
             try {
                 const startDateStr = new Date(taskData.start_date).toLocaleDateString('th-TH');
                 const endDateStr = new Date(taskData.end_date).toLocaleDateString('th-TH');
                 const webUrl = window.location.href.split('?')[0];
 
-                let text = "🚨 *มีภาระงานใหม่!*\n" +
-                           "📅 วันที่สั่ง: " + startDateStr + " | งานชิ้นที่: " + taskData.order_num + "\n" +
-                           "📚 รหัสวิชา: " + subjectInfo.subject_code + "\n" +
-                           "📖 ชื่อวิชา: " + subjectInfo.subject_name + "\n" +
-                           "👨‍🏫 ครูผู้สอน: " + subjectInfo.teacher_name + "\n" +
+                let text = "มีภาระงานใหม่!\n" +
+                           "วันที่สั่ง: " + startDateStr + " | งานชิ้นที่: " + taskData.order_num + "\n" +
+                           "รหัสวิชา: " + subjectInfo.subject_code + "\n" +
+                           "ชื่อวิชา: " + subjectInfo.subject_name + "\n" +
+                           "ครูผู้สอน: " + subjectInfo.teacher_name + "\n" +
                            "------------------------------\n" +
-                           "📌 *หัวข้อ:* " + taskData.topic + "\n" +
-                           "📝 *รายละเอียด:* " + (taskData.details || "-") + "\n" +
-                           "👥 *รูปแบบงาน:* " + taskData.work_type + "\n" +
-                           "⏰ *กำหนดส่ง:* " + endDateStr + "\n";
+                           "หัวข้อ: " + taskData.topic + "\n" +
+                           "รายละเอียด: " + (taskData.details || "-") + "\n" +
+                           "รูปแบบงาน: " + taskData.work_type + "\n" +
+                           "กำหนดส่ง: " + endDateStr + "\n";
                            
-                if (taskData.links) text += "📎 *ลิงก์/ข้อความ:* " + taskData.links + "\n";
-                if (taskData.remarks) text += "💡 *หมายเหตุ:* " + taskData.remarks + "\n";
+                if (taskData.links) text += "ลิงก์/ข้อความ: " + taskData.links + "\n";
+                if (taskData.remarks) text += "หมายเหตุ: " + taskData.remarks + "\n";
                 text += "------------------------------\n" +
-                        "🌐 [ดูรายละเอียด/เข้าสู่ระบบ](" + webUrl + ")";
+                        "ดูรายละเอียด/เข้าสู่ระบบ: " + webUrl;
 
                 if (!images || images.length === 0) {
                     await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ chat_id: TG_CHAT_ID, text: text, parse_mode: "Markdown", disable_web_page_preview: true })
+                        body: JSON.stringify({ chat_id: TG_CHAT_ID, text: text, disable_web_page_preview: true })
                     });
                 } else if (images.length === 1) {
                     await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendPhoto`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ chat_id: TG_CHAT_ID, photo: images[0].lh_url, caption: text, parse_mode: "Markdown" })
+                        body: JSON.stringify({ chat_id: TG_CHAT_ID, photo: images[0].lh_url, caption: text })
                     });
                 } else {
                     let media = [];
@@ -604,7 +604,6 @@
                         let mItem = { type: "photo", media: images[i].lh_url };
                         if (i === 0) {
                             mItem.caption = text;
-                            mItem.parse_mode = "Markdown";
                         }
                         media.push(mItem);
                     }
@@ -645,7 +644,6 @@
 
                 newlyUploadedTempFiles = [];
 
-                // ส่ง Telegram จากหน้าเว็บตรงทันที (ถ้าเปิดใช้งาน)
                 if(document.getElementById('f-notify').checked) {
                     const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
                     if(sData) {
@@ -811,6 +809,7 @@
             });
         }
 
+        // --- NAVIGATION & CLEANUP ---
         function switchView(view) { 
             [viewPublic, viewEditor, viewAdmin].forEach(v => v.classList.add('hide')); 
             view.classList.remove('hide'); 
@@ -832,7 +831,9 @@
         document.getElementById('btn-admin').onclick = () => { switchView(viewAdmin); fetchAllTerms(); fetchAppUsers(); };
         document.querySelectorAll('.btn-cancel').forEach(btn => btn.onclick = () => switchView(viewPublic));
 
-        // --- UPLOAD IMAGES IN EDITOR ---
+        // ==========================================
+        // EDITOR PANEL
+        // ==========================================
         const fileInput = document.getElementById('f-images');
         const previewContainer = document.getElementById('image-previews');
         const btnSubmit = document.getElementById('btn-submit');
@@ -898,7 +899,8 @@
             }
 
             const now = new Date(); 
-            document.getElementById('f-start').value = now.toISOString().slice(0,10);
+            const todayStr = now.toISOString().slice(0,10);
+            document.getElementById('f-start').value = todayStr;
             const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             document.getElementById('f-end').value = nextWeek.toISOString().slice(0,10);
 
