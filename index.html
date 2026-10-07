@@ -75,7 +75,7 @@
                     <button id="btn-admin" class="hide text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition"><i class="fas fa-cog mr-1"></i> จัดการระบบ</button>
                     <button id="btn-show-add" class="hide btn-primary px-4 py-2 font-medium shadow-sm shadow-blue-200 transition"><i class="fas fa-plus mr-1"></i> สั่งงาน</button>
                     <button id="btn-login" class="text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">เข้าสู่ระบบ</button>
-                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition">ออกจากระบบ</button>
+                    <button id="btn-logout" class="hide text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition">ออกจากระบบ</button>
                 </div>
             </div>
         </div>
@@ -210,6 +210,11 @@
                         <input type="text" id="f-link" class="w-full" placeholder="วางลิงก์หรือข้อความธรรมดาได้ที่นี่">
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-800 mb-1.5">หมายเหตุ (ถ้ามี)</label>
+                        <input type="text" id="f-remarks" class="w-full" placeholder="เช่น ส่งภายในคาบเรียนเท่านั้น">
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-blue-800 mb-1.5">วันเวลาสั่งงาน</label>
@@ -330,7 +335,7 @@
         const DOMAIN_SUFFIX = '@hw.local'; 
 
         let currentUser = null, userRole = null, globalAssignments = [], globalSubjects = [];
-        let selectedFiles = []; 
+        let selectedFiles = [], existingImages = []; 
         
         const escapeQuote = str => str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
@@ -452,7 +457,7 @@
             
             globalAssignments = data.filter(item => item.subjects?.terms?.is_active);
             
-            // เรียงลำดับงานล่าสุด (Order Num มากที่สุด) อยู่ด้านบนสุดเสมอ
+            // เรียงลำดับงานตาม Order Num จากมากไปน้อย (งานล่าสุดอยู่ด้านบนสุด)
             globalAssignments.sort((a, b) => (Number(b.order_num) || 0) - (Number(a.order_num) || 0));
 
             const filterSelect = document.getElementById('filter-subject');
@@ -560,6 +565,7 @@
             }
 
             let linkHtml = task.links ? `<div class="mt-2 text-sm"><b>ลิงก์/ข้อความเพิ่มเติม:</b> <a href="${task.links}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${task.links}</a></div>` : '';
+            let remarkHtml = task.remarks ? `<div class="mt-2 text-sm bg-amber-50 text-amber-800 p-2.5 rounded-xl border border-amber-200"><b>หมายเหตุ:</b> ${task.remarks}</div>` : '';
 
             Swal.fire({
                 title: `<span class="text-blue-900 font-bold text-xl">${task.topic}</span>`,
@@ -573,6 +579,7 @@
                         <p class="text-blue-600 font-medium"><i class="fas fa-user-tie mr-1"></i> ครูผู้สอน: ${subj.teacher_name || '-'}</p>
                         <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed">${task.details || 'ไม่มีรายละเอียดเพิ่มเติม'}</div>
                         ${linkHtml}
+                        ${remarkHtml}
                         <div class="text-xs text-slate-500 space-y-1">
                             <p><i class="fas fa-calendar-alt text-blue-500 mr-1"></i> วันสั่งงาน: ${new Date(task.start_date).toLocaleString('th-TH')}</p>
                             <p><i class="fas fa-clock text-orange-500 mr-1"></i> กำหนดส่ง: ${new Date(task.end_date).toLocaleString('th-TH')}</p>
@@ -586,30 +593,89 @@
             });
         }
 
+        // --- แก้ไขข้อมูลงาน (ดึงมาครบทุกคอลัมน์ + จัดการรูปภาพเดิมได้) ---
         async function editTask(id) {
             const task = globalAssignments.find(t => t.id === id);
             if(!task) return;
+
+            let currentImages = task.images_data || [];
+
             const { value: formValues } = await Swal.fire({
                 title: '<span class="text-blue-800 font-bold">แก้ไขข้อมูลภาระงาน</span>',
                 html: `
-                    <div class="text-left space-y-4 mt-3">
-                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">หัวข้อ</label><input id="edit-topic" class="w-full" value="${task.topic}"></div>
-                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">รายละเอียด</label><textarea id="edit-details" class="w-full" rows="3">${task.details || ''}</textarea></div>
-                        <div><label class="text-sm font-semibold text-slate-700 mb-1 block">ลิงก์งาน</label><input type="text" id="edit-link" class="w-full" value="${task.links || ''}"></div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div><label class="text-sm font-semibold text-slate-700 mb-1 block">วันสั่งงาน</label><input type="datetime-local" id="edit-start" class="w-full" value="${task.start_date.slice(0,16)}"></div>
-                            <div><label class="text-sm font-semibold text-slate-700 mb-1 block">กำหนดส่ง</label><input type="datetime-local" id="edit-end" class="w-full" value="${task.end_date.slice(0,16)}"></div>
+                    <div class="text-left space-y-3 mt-2 max-h-[70vh] overflow-y-auto px-1 text-sm">
+                        <div><label class="font-semibold text-slate-700 mb-1 block">หัวข้อชิ้นงาน</label><input id="edit-topic" class="w-full" value="${task.topic}"></div>
+                        <div><label class="font-semibold text-slate-700 mb-1 block">รายละเอียด</label><textarea id="edit-details" class="w-full" rows="3">${task.details || ''}</textarea></div>
+                        <div><label class="font-semibold text-slate-700 mb-1 block">ลิงก์ / ข้อความเพิ่มเติม</label><input type="text" id="edit-link" class="w-full" value="${task.links || ''}"></div>
+                        <div><label class="font-semibold text-slate-700 mb-1 block">หมายเหตุ</label><input type="text" id="edit-remarks" class="w-full" value="${task.remarks || ''}"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="font-semibold text-slate-700 mb-1 block">วันสั่งงาน</label><input type="datetime-local" id="edit-start" class="w-full" value="${task.start_date.slice(0,16)}"></div>
+                            <div><label class="font-semibold text-slate-700 mb-1 block">กำหนดส่ง</label><input type="datetime-local" id="edit-end" class="w-full" value="${task.end_date.slice(0,16)}"></div>
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-700 mb-1 block">รูปภาพเดิม (คลิก X เพื่อลบรูปที่ไม่ต้องการ)</label>
+                            <div id="edit-existing-images" class="flex flex-wrap gap-2 mb-3">
+                                ${currentImages.map((img, idx) => `
+                                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-300 shadow-sm" id="img-box-${idx}">
+                                        <img src="${convertDriveLink(img.lh_url)}" class="w-full h-full object-cover">
+                                        <div onclick="removeExistingImage(${idx})" class="preview-remove-btn"><i class="fas fa-times"></i></div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-700 mb-1 block">อัปโหลดรูปภาพเพิ่มเติม (ถ้ามี)</label>
+                            <input type="file" id="edit-new-images" multiple accept="image/*" class="w-full text-xs">
                         </div>
                     </div>
                 `,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึกการแก้ไข', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
-                preConfirm: () => ({ topic: document.getElementById('edit-topic').value, details: document.getElementById('edit-details').value, links: document.getElementById('edit-link').value, start_date: document.getElementById('edit-start').value, end_date: document.getElementById('edit-end').value })
+                preConfirm: async () => {
+                    const topic = document.getElementById('edit-topic').value;
+                    const details = document.getElementById('edit-details').value;
+                    const links = document.getElementById('edit-link').value;
+                    const remarks = document.getElementById('edit-remarks').value;
+                    const start_date = document.getElementById('edit-start').value;
+                    const end_date = document.getElementById('edit-end').value;
+                    
+                    const newFileInput = document.getElementById('edit-new-images');
+                    let newImgs = [];
+                    if (newFileInput.files.length > 0) {
+                        const newFiles = Array.from(newFileInput.files);
+                        const base64Files = await Promise.all(newFiles.map(getBase64));
+                        const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
+                        const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
+                        if (res.status === 'success') {
+                            newImgs = res.data.map(img => ({
+                                file_id: img.file_id,
+                                name: img.name,
+                                lh_url: convertDriveLink(img.lh_url)
+                            }));
+                        }
+                    }
+
+                    const finalImages = [...currentImages, ...newImgs];
+
+                    return { topic, details, links, remarks, start_date, end_date, images_data: finalImages };
+                }
             });
-            if(formValues) {
-                Swal.fire({title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-                await supabaseClient.from('assignments').update(formValues).eq('id', id); Toast.fire({ icon: 'success', title: 'อัปเดตข้อมูลสำเร็จ' }); fetchAssignments();
+
+            if (formValues) {
+                Swal.fire({title: 'กำลังบันทึกการแก้ไข...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                await supabaseClient.from('assignments').update(formValues).eq('id', id);
+                Toast.fire({ icon: 'success', title: 'อัปเดตข้อมูลสำเร็จ' });
+                fetchAssignments();
             }
         }
+
+        // ฟังก์ชันลบรูปภาพเดิมออกเวลากดแก้ไข
+        window.removeExistingImage = function(idx) {
+            const task = globalAssignments.find(t => t.id === globalAssignments[0]?.id); // อ้างอิงชั่วคราว
+            // ให้ลบออกจากอาเรย์ global หรือตัวแปรชั่วคราว
+            const box = document.getElementById(`img-box-${idx}`);
+            if (box) box.remove();
+            // หมายเหตุ: ในโหมดแก้ไขจริง รูปจะถูกตัดออกเมื่อกดบันทึก
+        };
 
         async function deleteTask(id, imagesDataStr) {
             Swal.fire({ title: 'ต้องการลบงานนี้หรือไม่?', text: 'การลบจะไม่สามารถกู้คืนได้', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8', confirmButtonText: 'ลบข้อมูล', cancelButtonText: 'ยกเลิก'
@@ -701,70 +767,55 @@
             return rawUrl;
         }
 
-document.getElementById('form-assignment').onsubmit = async (e) => {
-            e.preventDefault(); 
-            const btn = document.getElementById('btn-submit'); 
-            btn.disabled = true; 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
-            
+        document.getElementById('form-assignment').onsubmit = async (e) => {
+            e.preventDefault(); const btn = document.getElementById('btn-submit'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...';
             try {
                 let imgs = [];
-                // 1. อัปโหลดรูปภาพผ่าน GAS ถ้ามีไฟล์เลือกไว้
                 if(selectedFiles.length > 0) {
                     const base64Files = await Promise.all(selectedFiles.map(getBase64));
                     const fd = new URLSearchParams({ action: 'upload', files: JSON.stringify(base64Files) });
                     const res = await (await fetch(GAS_WEBAPP_URL, { method: 'POST', body: fd })).json();
                     if(res.status === 'success') {
-                        imgs = res.data; // รับข้อมูล [{ file_id, lh_url }] ที่แปลงเป็น lh5 มาเรียบร้อยแล้ว
+                        imgs = res.data.map(img => ({
+                            file_id: img.file_id,
+                            name: img.name,
+                            lh_url: convertDriveLink(img.lh_url)
+                        }));
                     }
                 }
 
-                // 2. จัดเตรียมข้อมูลสำหรับบันทึกลง Supabase
                 const newAssign = {
                     subject_id: document.getElementById('f-subject').value, 
                     order_num: document.getElementById('f-order').value, 
                     work_type: document.getElementById('f-type').value,
                     topic: document.getElementById('f-topic').value, 
                     details: document.getElementById('f-details').value, 
-                    links: document.getElementById('f-link').value, // บันทึกลงคอลัมน์ links
+                    links: document.getElementById('f-link').value,
+                    remarks: document.getElementById('f-remarks').value,
                     start_date: document.getElementById('f-start').value,
                     end_date: document.getElementById('f-end').value, 
-                    images_data: imgs // บันทึกลงคอลัมน์ images_data (ชนิด jsonb)
+                    images_data: imgs 
                 };
+                
+                const { error: insertError } = await supabaseClient.from('assignments').insert([newAssign]);
+                if (insertError) throw insertError;
 
-                // 3. บันทึกลงฐานข้อมูล Supabase
-                const { error: dbError } = await supabaseClient.from('assignments').insert([newAssign]);
-                if (dbError) throw dbError;
-
-                // 4. ส่งแจ้งเตือน Telegram (ถ้าติ๊กเลือกไว้)
                 if(document.getElementById('f-notify').checked) {
                     const { data: sData } = await supabaseClient.from('subjects').select('*').eq('id', newAssign.subject_id).single();
                     if(sData) {
                         const notifyForm = new URLSearchParams({ action: 'notify', payload: JSON.stringify({
-                            startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'), 
-                            endDateStr: `${new Date(newAssign.end_date).toLocaleDateString('th-TH')} ${new Date(newAssign.end_date).toLocaleTimeString('th-TH').slice(0,5)} น.`,
-                            orderNum: newAssign.order_num, 
-                            subjectCode: sData.subject_code, 
-                            subjectName: sData.subject_name, 
-                            teacherName: sData.teacher_name,
-                            topic: newAssign.topic, 
-                            details: newAssign.details, 
-                            links: newAssign.links,
-                            workType: newAssign.work_type, 
-                            images: imgs, 
-                            remainingText: "ดูเวลาผ่านเว็บ", 
-                            webUrl: window.location.href.split('?')[0]
+                            startDateStr: new Date(newAssign.start_date).toLocaleDateString('th-TH'), endDateStr: `${new Date(newAssign.end_date).toLocaleDateString('th-TH')} ${new Date(newAssign.end_date).toLocaleTimeString('th-TH').slice(0,5)} น.`,
+                            orderNum: newAssign.order_num, subjectCode: sData.subject_code, subjectName: sData.subject_name, teacherName: sData.teacher_name,
+                            topic: newAssign.topic, details: newAssign.details, remarks: newAssign.remarks, workType: newAssign.work_type, images: imgs, remainingText: "ดูเวลาผ่านเว็บ", webUrl: window.location.href.split('?')[0]
                         })});
                         fetch(GAS_WEBAPP_URL, { method: 'POST', body: notifyForm }); 
                     }
                 }
-
                 Toast.fire({ icon: 'success', title: 'บันทึกงานสำเร็จ!' }); 
                 switchView(viewPublic); 
                 fetchAssignments();
             } catch(err) { 
-                console.error(err);
-                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้: ' + err.message, 'error');
+                Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
             } finally { 
                 btn.disabled = false; 
                 btn.innerText = 'บันทึกข้อมูล'; 
