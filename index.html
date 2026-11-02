@@ -70,7 +70,6 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-14 items-center">
                 <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchView(viewPublic)">
-                    <!-- <img src="https://lh3.googleusercontent.com/d/1paoNlzhUBPVTXljkCJCeY5A4P-4Od5zB" alt="Logo" class="h-8 w-auto object-contain rounded-md">    -->
                     <img src="https://lh3.googleusercontent.com/d/1-44Iq1Ofq9ICuJmNzb-N6WPUKD3ZnPAR" alt="Logo" class="h-8 w-auto object-contain rounded-md">
                     <span class="text-lg tracking-wide text-blue-900 font-bold">HW Tracker</span>
                 </div>
@@ -275,8 +274,8 @@
                 </div>
                 
                 <form id="form-user-add" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 mb-4 items-end bg-blue-50/30 p-3.5 rounded-xl border border-blue-100/60">
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">Username</label><input type="text" id="f-add-user" required class="w-full lowercase bg-white text-xs" pattern="[a-zA-Z0-9]+" placeholder="เช่น teacher01"></div>
-                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">รหัสผ่าน</label><input type="password" id="f-add-pass" required minlength="6" class="w-full bg-white text-xs" placeholder="******"></div>
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">Username</label><input type="text" id="f-add-user" required class="bg-white text-xs" placeholder="เช่น Teacher01"></div>
+                    <div><label class="block text-xs font-semibold text-blue-700 mb-1">รหัสผ่าน</label><input type="password" id="f-add-pass" required class="w-full bg-white text-xs" placeholder="รหัสผ่านกี่หลักก็ได้"></div>
                     <div><label class="block text-xs font-semibold text-blue-700 mb-1">มอบสิทธิ์</label><select id="f-add-role" class="w-full bg-white text-xs"><option value="editor">Editor (สั่งงาน)</option><option value="admin">Admin (ผู้ดูแล)</option></select></div>
                     <div><button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-xs font-semibold transition shadow-sm">สร้างบัญชี</button></div>
                 </form>
@@ -309,7 +308,6 @@
         
         const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw0f_Nd6T2IX38JLLyCviq4MklmBodQfgacdSeucdYZZhj90GaUdpL3ndKfKj4CYfGn/exec';
         
-        // Telegram Config (ปลอดภัยจาก Status 400 ด้วย MarkdownV2 ที่ถูกต้อง หรือข้อความแบบจัดรูปแบบสวยงาม)
         const TG_BOT_TOKEN = "7980580329:AAHNgBjCdxlowQFzxn8PnFrqJ7xpszGdO2o";
         const TG_CHAT_ID = "-1002246838239";
 
@@ -348,9 +346,12 @@
                 userDisplay.innerText = `ผู้ใช้งาน: ${rawName}`;
                 userDisplay.classList.remove('hidden');
                 
-                const { data: roleData } = await supabaseClient.from('users_role').select('role').eq('user_id', currentUser.id).single();
+                const { data: roleData } = await supabaseClient.from('users_role').select('role, username').eq('user_id', currentUser.id).single();
                 if(roleData) {
                     userRole = roleData.role;
+                    if(roleData.username) {
+                        userDisplay.innerText = `ผู้ใช้งาน: ${roleData.username}`;
+                    }
                     if(userRole === 'admin') btnAdmin.classList.remove('hide');
                     if(userRole === 'editor' || userRole === 'admin') btnShowAdd.classList.remove('hide');
                 } else {
@@ -383,7 +384,15 @@
                 html: `
                     <div class="flex flex-col gap-4 text-left mt-2 px-1">
                         <div><label class="block text-sm font-semibold text-blue-700 mb-1">Username</label><input id="swal-user" type="text" class="w-full" placeholder="กรอกชื่อผู้ใช้"></div>
-                        <div class="relative"><label class="block text-sm font-semibold text-blue-700 mb-1">Password</label><div class="relative flex items-center"><input id="swal-pass" type="password" class="w-full pr-10" placeholder="กรอกรหัสผ่าน"><button type="button" id="toggle-pass" class="absolute right-3 text-gray-400 hover:text-blue-600 p-1 flex items-center justify-center"><i class="fas fa-eye"></i></button></div></div>
+                        <div class="relative">
+                            <label class="block text-sm font-semibold text-blue-700 mb-1">Password</label>
+                            <div class="relative flex items-center">
+                                <input id="swal-pass" type="password" class="w-full pr-10" placeholder="กรอกรหัสผ่าน">
+                                <button type="button" id="toggle-pass" class="absolute right-3 text-gray-400 hover:text-blue-600 p-1 flex items-center justify-center">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 `,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'เข้าสู่ระบบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
@@ -398,7 +407,7 @@
                     document.getElementById('swal-pass').addEventListener('keydown', handleEnter);
                 },
                 preConfirm: () => {
-                    const user = document.getElementById('swal-user').value.trim().toLowerCase();
+                    const user = document.getElementById('swal-user').value.trim();
                     const pass = document.getElementById('swal-pass').value;
                     if (!user || !pass) { Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน'); return false; }
                     return { email: user + DOMAIN_SUFFIX, password: pass }
@@ -564,7 +573,6 @@
             });
         }
 
-        // --- ฟังก์ชันยิงตรงไป Telegram พร้อมไอคอนและจัดตัวหนา (HTML Format ปลอดภัย 100%) ---
         async function sendTelegramDirectly(taskData, subjectInfo, images) {
             try {
                 const startDateStr = new Date(taskData.start_date).toLocaleDateString('th-TH');
@@ -1005,11 +1013,11 @@
             e.preventDefault();
             Toast.fire({ icon: 'info', title: 'กำลังสร้างบัญชี...' });
             const { data: { session: adminSession } } = await supabaseClient.auth.getSession();
-            const user = document.getElementById('f-add-user').value.toLowerCase();
+            const user = document.getElementById('f-add-user').value.trim();
             const pass = document.getElementById('f-add-pass').value;
             const role = document.getElementById('f-add-role').value;
             
-            const { data, error } = await supabaseClient.auth.signUp({ email: user + DOMAIN_SUFFIX, password: pass });
+            const { data, error } = await supabaseClient.auth.signUp({ email: user.toLowerCase() + DOMAIN_SUFFIX, password: pass });
             if(error) { Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); return; }
             if (data.user) { await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: role, username: user }]); }
             if (adminSession) { await supabaseClient.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token }); }
@@ -1039,18 +1047,42 @@
         async function editAppUser(uid, currentName, currentRole) {
             const { value: formValues } = await Swal.fire({
                 title: '<span class="text-blue-800 font-bold">แก้ไขข้อมูลผู้ใช้</span>',
-                html: `<div class="text-left space-y-3 mt-3 text-xs"><div><label class="font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full text-xs lowercase" value="${currentName}"></div><div><label class="font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label><select id="eu-role" class="w-full text-xs"><option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option><option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option></select></div></div>`,
+                html: `
+                    <div class="text-left space-y-3 mt-3 text-xs">
+                        <div><label class="font-semibold text-slate-700 mb-1 block">Username</label><input id="eu-name" class="w-full text-xs" value="${currentName}"></div>
+                        <div>
+                            <label class="font-semibold text-slate-700 mb-1 block">ตั้งรหัสผ่านใหม่ (หากไม่เปลี่ยนให้เว้นว่างไว้)</label>
+                            <div class="relative flex items-center">
+                                <input type="password" id="eu-pass" class="w-full text-xs pr-10" placeholder="กรอกรหัสผ่านใหม่หากต้องการเปลี่ยน">
+                                <button type="button" id="toggle-edit-pass" class="absolute right-3 text-gray-400 hover:text-blue-600 p-1 flex items-center justify-center">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div><label class="font-semibold text-slate-700 mb-1 block">ระดับสิทธิ์</label><select id="eu-role" class="w-full text-xs"><option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>คุณครู (Editor)</option><option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ (Admin)</option></select></div>
+                    </div>
+                `,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
+                didOpen: () => {
+                    document.getElementById('toggle-edit-pass').onclick = function() {
+                        const passInp = document.getElementById('eu-pass');
+                        passInp.type = passInp.type === 'password' ? 'text' : 'password';
+                        this.innerHTML = passInp.type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash text-blue-500"></i>';
+                    };
+                },
                 preConfirm: () => {
-                    const n = document.getElementById('eu-name').value.trim().toLowerCase();
+                    const n = document.getElementById('eu-name').value.trim();
+                    const p = document.getElementById('eu-pass').value;
                     const r = document.getElementById('eu-role').value;
                     if(!n) { Swal.showValidationMessage('กรุณากรอก Username'); return false; }
-                    return { username: n, role: r }
+                    return { username: n, password: p, role: r }
                 }
             });
             if (formValues) {
                 Toast.fire({ icon: 'info', title: 'กำลังบันทึก...' });
                 await supabaseClient.from('users_role').update({ username: formValues.username, role: formValues.role }).eq('user_id', uid);
+                
+                // แจ้งเตือนสถานะสำเร็จ
                 Toast.fire({ icon: 'success', title: 'อัปเดตบัญชีสำเร็จ' });
                 fetchAppUsers();
             }
