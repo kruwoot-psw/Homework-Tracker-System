@@ -328,110 +328,118 @@
             await fetchAssignments();
         };
 
-        // --- AUTH LOGIC ---
-        async function checkUserSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            const userDisplay = document.getElementById('user-display');
-            const btnLogin = document.getElementById('btn-login');
-            const btnLogout = document.getElementById('btn-logout');
-            const btnAdmin = document.getElementById('btn-admin');
-            const btnShowAdd = document.getElementById('btn-show-add');
-            
-            if (session) {
-                currentUser = session.user;
-                btnLogin.classList.add('hide');
-                btnLogout.classList.remove('hide');
-                
-                const rawName = currentUser.email ? currentUser.email.split('@')[0] : 'ผู้ใช้งาน';
-                userDisplay.innerText = `ผู้ใช้งาน: ${rawName}`;
-                userDisplay.classList.remove('hidden');
-                
-                const { data: roleData } = await supabaseClient.from('users_role').select('role, username').eq('user_id', currentUser.id).single();
-                if(roleData) {
-                    userRole = roleData.role;
-                    if(roleData.username) {
-                        userDisplay.innerText = `ผู้ใช้งาน: ${roleData.username}`;
-                    }
-                    if(userRole === 'admin') btnAdmin.classList.remove('hide');
-                    if(userRole === 'editor' || userRole === 'admin') btnShowAdd.classList.remove('hide');
-                } else {
-                    userRole = 'admin';
-                    btnAdmin.classList.remove('hide');
-                    btnShowAdd.classList.remove('hide');
-                }
-            } else {
-                currentUser = null;
-                userRole = null;
-                btnLogin.classList.remove('hide');
-                btnLogout.classList.add('hide');
-                btnAdmin.classList.add('hide');
-                btnShowAdd.classList.add('hide');
-                userDisplay.classList.add('hidden');
-                
-                switchView(viewPublic);
-            }
+async function checkUserSession() {
+    const savedUser = localStorage.getItem('hw_tracker_user');
+    const userDisplay = document.getElementById('user-display');
+    const btnLogin = document.getElementById('btn-login');
+    const btnLogout = document.getElementById('btn-logout');
+    const btnAdmin = document.getElementById('btn-admin');
+    const btnShowAdd = document.getElementById('btn-show-add');
+    
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        userRole = localStorage.getItem('hw_tracker_role') || 'editor';
 
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-                    checkUserSession();
-                }
-            });
+        btnLogin.classList.add('hide');
+        btnLogout.classList.remove('hide');
+        
+        userDisplay.innerText = `ผู้ใช้งาน: ${currentUser.username}`;
+        userDisplay.classList.remove('hidden');
+        
+        if(userRole === 'admin') btnAdmin.classList.remove('hide');
+        if(userRole === 'editor' || userRole === 'admin') btnShowAdd.classList.remove('hide');
+    } else {
+        currentUser = null;
+        userRole = null;
+        btnLogin.classList.remove('hide');
+        btnLogout.classList.add('hide');
+        btnAdmin.classList.add('hide');
+        btnShowAdd.classList.add('hide');
+        userDisplay.classList.add('hidden');
+        
+        switchView(viewPublic);
+    }
+}
+
+document.getElementById('btn-login').onclick = async () => {
+    const { value: formValues } = await Swal.fire({
+        title: '<span class="text-blue-700 font-bold">เข้าสู่ระบบ</span>',
+        html: `
+            <div class="flex flex-col gap-4 text-left mt-2 px-1">
+                <div><label class="block text-sm font-semibold text-blue-700 mb-1">Username</label><input id="swal-user" type="text" class="w-full" placeholder="กรอกชื่อผู้ใช้"></div>
+                <div class="relative">
+                    <label class="block text-sm font-semibold text-blue-700 mb-1">Password</label>
+                    <div class="relative flex items-center">
+                        <input id="swal-pass" type="password" class="w-full pr-10" placeholder="กรอกรหัสผ่าน">
+                        <button type="button" id="toggle-pass" class="absolute right-3 text-gray-400 hover:text-blue-600 p-1 flex items-center justify-center">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `,
+        focusConfirm: false, showCancelButton: true, confirmButtonText: 'เข้าสู่ระบบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
+        didOpen: () => {
+            document.getElementById('toggle-pass').onclick = function() {
+                const passInp = document.getElementById('swal-pass');
+                passInp.type = passInp.type === 'password' ? 'text' : 'password';
+                this.innerHTML = passInp.type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash text-blue-500"></i>';
+            };
+            const handleEnter = (e) => { if (e.key === 'Enter') Swal.clickConfirm(); };
+            document.getElementById('swal-user').addEventListener('keydown', handleEnter);
+            document.getElementById('swal-pass').addEventListener('keydown', handleEnter);
+        },
+        preConfirm: () => {
+            const user = document.getElementById('swal-user').value.trim();
+            const pass = document.getElementById('swal-pass').value;
+            if (!user || !pass) { Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน'); return false; }
+            return { username: user, password: pass }
+        }
+    });
+
+    if (formValues) {
+        Toast.fire({ icon: 'info', title: 'กำลังตรวจสอบ...' });
+        
+        // ค้นหาข้อมูลจากตาราง users_role โดยตรง
+        const { data: userData, error } = await supabaseClient
+            .from('users_role')
+            .select('*')
+            .eq('username', formValues.username)
+            .single();
+
+        if (error || !userData) {
+            Swal.fire({ icon: 'error', title: 'ไม่พบชื่อผู้ใช้นี้', text: 'กรุณาตรวจสอบ Username อีกครั้ง', confirmButtonColor: '#ef4444' });
+            return;
         }
 
-        document.getElementById('btn-login').onclick = async () => {
-            const { value: formValues } = await Swal.fire({
-                title: '<span class="text-blue-700 font-bold">เข้าสู่ระบบ</span>',
-                html: `
-                    <div class="flex flex-col gap-4 text-left mt-2 px-1">
-                        <div><label class="block text-sm font-semibold text-blue-700 mb-1">Username</label><input id="swal-user" type="text" class="w-full" placeholder="กรอกชื่อผู้ใช้"></div>
-                        <div class="relative">
-                            <label class="block text-sm font-semibold text-blue-700 mb-1">Password</label>
-                            <div class="relative flex items-center">
-                                <input id="swal-pass" type="password" class="w-full pr-10" placeholder="กรอกรหัสผ่าน">
-                                <button type="button" id="toggle-pass" class="absolute right-3 text-gray-400 hover:text-blue-600 p-1 flex items-center justify-center">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `,
-                focusConfirm: false, showCancelButton: true, confirmButtonText: 'เข้าสู่ระบบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#3b82f6',
-                didOpen: () => {
-                    document.getElementById('toggle-pass').onclick = function() {
-                        const passInp = document.getElementById('swal-pass');
-                        passInp.type = passInp.type === 'password' ? 'text' : 'password';
-                        this.innerHTML = passInp.type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash text-blue-500"></i>';
-                    };
-                    const handleEnter = (e) => { if (e.key === 'Enter') Swal.clickConfirm(); };
-                    document.getElementById('swal-user').addEventListener('keydown', handleEnter);
-                    document.getElementById('swal-pass').addEventListener('keydown', handleEnter);
-                },
-                preConfirm: () => {
-                    const user = document.getElementById('swal-user').value.trim();
-                    const pass = document.getElementById('swal-pass').value;
-                    if (!user || !pass) { Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน'); return false; }
-                    return { email: user + DOMAIN_SUFFIX, password: pass }
-                }
-            });
+        // ตรวจสอบรหัสผ่านที่เก็บไว้ในตาราง
+        if (userData.password !== formValues.password) {
+            Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ถูกต้อง', text: 'กรุณาตรวจสอบรหัสผ่านอีกครั้ง', confirmButtonColor: '#ef4444' });
+            return;
+        }
 
-            if (formValues) {
-                Toast.fire({ icon: 'info', title: 'กำลังตรวจสอบ...' });
-                const { error } = await supabaseClient.auth.signInWithPassword(formValues);
-                if (error) {
-                    Swal.fire({ icon: 'error', title: 'ไม่พบผู้ใช้', text: 'กรุณาตรวจสอบ username password อีกครั้ง', confirmButtonColor: '#ef4444' });
-                } else {
-                    Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
-                    switchView(viewPublic);
-                }
-            }
-        };
+        // หากรหัสผ่านถูกต้อง ให้จำลอง Session เก็บไว้ในตัวแปรระบบ
+        currentUser = { id: userData.user_id, username: userData.username };
+        userRole = userData.role;
 
-        document.getElementById('btn-logout').onclick = async () => {
-            Toast.fire({ icon: 'info', title: 'กำลังออกจากระบบ...' });
-            await supabaseClient.auth.signOut();
-            switchView(viewPublic);
-            Toast.fire({ icon: 'success', title: 'ออกจากระบบเรียบร้อย' });
-        };
+        // บันทึกสถานะลงใน LocalStorage เพื่อให้เว็บจำการเข้าสู่ระบบ
+        localStorage.setItem('hw_tracker_user', JSON.stringify(currentUser));
+        localStorage.setItem('hw_tracker_role', userRole);
+
+        Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
+        checkUserSession();
+        switchView(viewPublic);
+    }
+};
+
+document.getElementById('btn-logout').onclick = async () => {
+    Toast.fire({ icon: 'info', title: 'กำลังออกจากระบบ...' });
+    localStorage.removeItem('hw_tracker_user');
+    localStorage.removeItem('hw_tracker_role');
+    checkUserSession();
+    switchView(viewPublic);
+    Toast.fire({ icon: 'success', title: 'ออกจากระบบเรียบร้อย' });
+};
 
         // --- PUBLIC VIEW ---
         async function fetchAssignments() {
@@ -1009,22 +1017,31 @@
         }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
-        document.getElementById('form-user-add').onsubmit = async (e) => {
-            e.preventDefault();
-            Toast.fire({ icon: 'info', title: 'กำลังสร้างบัญชี...' });
-            const { data: { session: adminSession } } = await supabaseClient.auth.getSession();
-            const user = document.getElementById('f-add-user').value.trim();
-            const pass = document.getElementById('f-add-pass').value;
-            const role = document.getElementById('f-add-role').value;
-            
-            const { data, error } = await supabaseClient.auth.signUp({ email: user.toLowerCase() + DOMAIN_SUFFIX, password: pass });
-            if(error) { Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); return; }
-            if (data.user) { await supabaseClient.from('users_role').insert([{ user_id: data.user.id, role: role, username: user }]); }
-            if (adminSession) { await supabaseClient.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token }); }
-            
-            Toast.fire({ icon: 'success', title: 'สร้างบัญชีสำเร็จ' });
-            e.target.reset(); fetchAppUsers();
-        };
+document.getElementById('form-user-add').onsubmit = async (e) => {
+    e.preventDefault();
+    Toast.fire({ icon: 'info', title: 'กำลังสร้างบัญชี...' });
+    
+    const user = document.getElementById('f-add-user').value.trim();
+    const pass = document.getElementById('f-add-pass').value;
+    const role = document.getElementById('f-add-role').value;
+    
+    // บันทึกข้อมูลลงตาราง users_role (รวมถึงรหัสผ่าน) โดยตรง
+    const { error } = await supabaseClient.from('users_role').insert([{ 
+        user_id: 'user_' + new Date().getTime(), // สร้าง ID ชั่วคราว
+        username: user, 
+        password: pass, 
+        role: role 
+    }]);
+
+    if(error) { 
+        Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); 
+        return; 
+    }
+    
+    Toast.fire({ icon: 'success', title: 'สร้างบัญชีสำเร็จ' });
+    e.target.reset(); 
+    fetchAppUsers();
+};
 
         async function fetchAppUsers() {
             const tbody = document.getElementById('users-table-body');
