@@ -1020,37 +1020,29 @@
             });
         }
 
-// ฟังก์ชันสำหรับสร้าง UUID v4 แบบสุ่มที่ถูกต้อง
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
+        document.getElementById('form-user-add').onsubmit = async (e) => {
+            e.preventDefault();
+            Toast.fire({ icon: 'info', title: 'กำลังสร้างบัญชี...' });
+            const user = document.getElementById('f-add-user').value.trim();
+            const pass = document.getElementById('f-add-pass').value;
+            const role = document.getElementById('f-add-role').value;
+            
+            const { error } = await supabaseClient.from('users_role').insert([{ 
+                user_id: generateUUID(), 
+                username: user, 
+                password: pass, 
+                role: role 
+            }]);
 
-document.getElementById('form-user-add').onsubmit = async (e) => {
-    e.preventDefault();
-    Toast.fire({ icon: 'info', title: 'กำลังสร้างบัญชี...' });
-    const user = document.getElementById('f-add-user').value.trim();
-    const pass = document.getElementById('f-add-pass').value;
-    const role = document.getElementById('f-add-role').value;
-    
-    const { error } = await supabaseClient.from('users_role').insert([{ 
-        user_id: generateUUID(), // สร้างรหัส UUID ที่ถูกต้องตามมาตรฐาน
-        username: user, 
-        password: pass, 
-        role: role 
-    }]);
-
-    if(error) { 
-        Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); 
-        return; 
-    }
-    
-    Toast.fire({ icon: 'success', title: 'สร้างบัญชีสำเร็จ' });
-    e.target.reset(); 
-    fetchAppUsers();
-};
+            if(error) { 
+                Swal.fire('สร้างบัญชีไม่สำเร็จ', 'สาเหตุ: ' + error.message, 'error'); 
+                return; 
+            }
+            
+            Toast.fire({ icon: 'success', title: 'สร้างบัญชีสำเร็จ' });
+            e.target.reset(); 
+            fetchAppUsers();
+        };
 
         async function fetchAppUsers() {
             const tbody = document.getElementById('users-table-body');
