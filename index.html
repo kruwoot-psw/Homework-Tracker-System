@@ -302,7 +302,7 @@
         // CONFIG & SETUP
         // ==========================================
         const SUPABASE_URL = 'https://evizikofpasozwermgja.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2aXppa29mcGFzb3p3ZXJtZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNzY1NDAsImV4cCI6MjEwNjg1MjU0MH0.2We6heZkEdzb2XClN6rbjhaOrRy9xyTGAr_GmVPZcOY';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2aXppa29mcGFzb3p3ZXJtZ2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3sqliteNzY1NDAsImV4cCI6MjEwNjg1MjU0MH0.2We6heZkEdzb2XClN6rbjhaOrRy9xyTGAr_GmVPZcOY';
         
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
@@ -326,7 +326,7 @@
             await fetchAssignments();
         };
 
-        // --- AUTH LOGIC (Directly from users_role table) ---
+        // --- AUTH LOGIC ---
         async function checkUserSession() {
             const savedUser = localStorage.getItem('hw_tracker_user');
             const userDisplay = document.getElementById('user-display');
@@ -1012,6 +1012,14 @@
         }
         async function deleteSubject(id) { if(confirm('ลบวิชานี้?')) { await supabaseClient.from('subjects').delete().eq('id', id); loadAdminSubjects(); } }
 
+        // ฟังก์ชันสร้างรหัส UUID v4 สำหรับ user_id ที่ตั้งเป็นชนิด UUID ใน Supabase
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
         document.getElementById('form-user-add').onsubmit = async (e) => {
             e.preventDefault();
             Toast.fire({ icon: 'info', title: 'กำลังสร้างบัญชี...' });
@@ -1020,7 +1028,7 @@
             const role = document.getElementById('f-add-role').value;
             
             const { error } = await supabaseClient.from('users_role').insert([{ 
-                user_id: 'usr_' + Date.now(), 
+                user_id: generateUUID(), 
                 username: user, 
                 password: pass, 
                 role: role 
